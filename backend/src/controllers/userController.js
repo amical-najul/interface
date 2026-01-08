@@ -147,8 +147,10 @@ exports.uploadAvatar = async (req, res) => {
 
         // Construct generic URL
         const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-        const endpoint = process.env.MINIO_ENDPOINT.replace('http://', '').replace('https://', '');
-        const url = `${protocol}://${endpoint}:${process.env.MINIO_PORT}/${bucketName}/${objectName}`;
+        // USE PUBLIC ENDPOINT for the URL stored in DB (accessible by browser)
+        // Fallback to localhost if not set (for local dev)
+        const publicEndpoint = (process.env.MINIO_PUBLIC_ENDPOINT || 'localhost').replace('http://', '').replace('https://', '');
+        const url = `${protocol}://${publicEndpoint}:${process.env.MINIO_PORT}/${bucketName}/${objectName}`;
 
         await pool.query('UPDATE users SET avatar_url=$1 WHERE id=$2', [url, req.user.id]);
 
