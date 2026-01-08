@@ -1,18 +1,25 @@
 import { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const AdminLayout = () => {
     const location = useLocation();
-    const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/');
+        logout();
     };
 
     const isActive = (path) => location.pathname === path;
+
+    // Guard: Don't render if user is not loaded yet
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+                <p className="text-gray-500">Cargando...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-100 font-inter">

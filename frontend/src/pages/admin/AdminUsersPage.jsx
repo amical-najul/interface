@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminUsersPage = () => {
+    const { token } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [error, setError] = useState('');
 
-    const token = localStorage.getItem('token');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
     // Fetch Users
@@ -118,7 +119,7 @@ const AdminUsersPage = () => {
                                                 <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
                                             ) : (
                                                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold">
-                                                    {user.email.charAt(0).toUpperCase()}
+                                                    {user.email?.charAt(0).toUpperCase() || '?'}
                                                 </div>
                                             )}
                                             <div>

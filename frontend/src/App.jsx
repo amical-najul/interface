@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { AuthProvider } from './context/AuthContext';
+import { GoogleConfigContext } from './context/GoogleConfigContext';
 import LoginPage from './pages/LoginPage';
 import AdminLayout from './layouts/AdminLayout';
 import AdminRoute from './components/AdminRoute';
@@ -15,7 +17,7 @@ const BrandingManager = ({ children }) => {
   useEffect(() => {
     const fetchBranding = async () => {
       try {
-        const res = await fetch(`${API_URL}/settings/smtp`);
+        const res = await fetch(`${API_URL}/settings/public`);
         if (res.ok) {
           const settings = await res.json();
           if (settings.app_name) {
@@ -41,42 +43,73 @@ const BrandingManager = ({ children }) => {
   return children;
 };
 
-// Wrapper for Google Auth
+// Wrapper for Google Auth - loads client ID dynamically
 const AuthWrapper = ({ children }) => {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID';
-  return (
+  const [clientId, setClientId] = useState(import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
+  const [oauthEnabled, setOauthEnabled] = useState(false);
+
+  useEffect(() => {
+    const fetchOAuthConfig = async () => {
+      try {
+        const res = await fetch(`${API_URL}/settings/oauth/public`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.client_id) setClientId(data.client_id);
+          setOauthEnabled(data.enabled);
+        }
+      } catch (err) {
+        console.error('Failed to load OAuth config:', err);
+      }
+    };
+    fetchOAuthConfig();
+  }, []);
+
+  // If OAuth is disabled or no client ID, render children without Google provider
+  const isEnabled = oauthEnabled && !!clientId;
+
+  const content = isEnabled ? (
     <GoogleOAuthProvider clientId={clientId}>
       {children}
     </GoogleOAuthProvider>
+  ) : (
+    <>{children}</>
+  );
+
+  return (
+    <GoogleConfigContext.Provider value={{ enabled: isEnabled }}>
+      {content}
+    </GoogleConfigContext.Provider>
   );
 };
 
 function App() {
   return (
     <AuthWrapper>
-      <BrandingManager>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LoginPage />} />
+      <AuthProvider>
+        <BrandingManager>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LoginPage />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminLayout />
-              </AdminRoute>
-            }>
-              <Route index element={<Navigate to="/admin/profile" replace />} />
-              <Route path="profile" element={<AdminProfilePage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="templates" element={<AdminTemplatesPage />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }>
+                <Route index element={<Navigate to="/admin/profile" replace />} />
+                <Route path="profile" element={<AdminProfilePage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="templates" element={<AdminTemplatesPage />} />
+              </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </BrandingManager>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </BrandingManager>
+      </AuthProvider>
     </AuthWrapper>
   );
 }

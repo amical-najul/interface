@@ -17,6 +17,7 @@ router.delete('/:id', auth, admin, userController.deleteUser);
 
 // Profile Routes (Authenticated User)
 router.put('/profile/me', auth, userController.updateProfile);
-router.post('/profile/avatar', auth, upload.single('avatar'), userController.uploadAvatar);
+router.post('/avatar', auth, upload.single('avatar'), userController.uploadAvatar);
+router.delete('/avatar', auth, userController.deleteAvatar);
 
 module.exports = router;

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -20,8 +21,8 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
 
-        // Generar token de verificación simple (random string)
-        const verificationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        // Generar token de verificación seguro
+        const verificationToken = crypto.randomBytes(32).toString('hex');
 
         const newUser = await pool.query(
             'INSERT INTO users (email, password_hash, is_verified, verification_token, name) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, is_verified, name',
@@ -129,7 +130,7 @@ exports.googleLogin = async (req, res) => {
 
         if (!user) {
             // Crear usuario si no existe
-            const randomPass = Math.random().toString(36).slice(-8);
+            const randomPass = crypto.randomBytes(16).toString('hex');
             const salt = await bcrypt.genSalt(10);
             const hash = await bcrypt.hash(randomPass, salt);
 
@@ -143,7 +144,7 @@ exports.googleLogin = async (req, res) => {
 
         // Generar JWT
         const jwtToken = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || 'secret',
             { expiresIn: '1d' }
         );

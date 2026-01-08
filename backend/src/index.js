@@ -5,6 +5,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const pool = require('./config/db');
 require('dotenv').config();
+const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,9 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/templates', require('./routes/templateRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
+
+// Error Middleware (Must be last)
+app.use(errorHandler);
 
 // Basic Health Check
 app.get('/', (req, res) => {

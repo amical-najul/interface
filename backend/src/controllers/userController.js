@@ -1,6 +1,11 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const minioClient = require('../config/minio');
+const sharp = require('sharp');
+
+// Image compression settings
+const IMAGE_MAX_WIDTH = 400;
+const IMAGE_QUALITY = 80;
 
 // Admin: Get all users
 exports.getAllUsers = async (req, res) => {
@@ -21,7 +26,8 @@ exports.createUser = async (req, res) => {
         const check = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (check.rows.length > 0) return res.status(400).json({ message: 'El usuario ya existe' });
 
-        const salt = await bcrypt.genSalt(10);
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+        const salt = await bcrypt.genSalt(saltRounds);
         const hash = await bcrypt.hash(password, salt);
 
         // Created users by admin are automatically verified
@@ -99,7 +105,7 @@ exports.updateProfile = async (req, res) => {
             idx++;
         }
 
-        query += ` WHERE id=$${idx} RETURNING id, email, name, role`;
+        query += ` WHERE id=$${idx} RETURNING id, email, name, role, avatar_url`;
         params.push(userId);
 
         const result = await pool.query(query, params);
@@ -110,23 +116,39 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
-// Avatar Upload (MinIO Implementation)
+// Avatar Upload with Image Compression (MinIO Implementation)
 exports.uploadAvatar = async (req, res) => {
     if (!req.file) return res.status(400).json({ message: 'No se subió imagen' });
 
     try {
-        const bucketName = process.env.MINIO_BUCKET_NAME || 'prototipo-assets';
-        const objectName = `avatars/${req.user.id}-${Date.now()}-${req.file.originalname}`;
+        const bucketName = process.env.MINIO_BUCKET_NAME;
+        if (!bucketName) {
+            throw new Error('MINIO_BUCKET_NAME not configured');
+        }
+
+        // Compress and resize image using Sharp
+        const compressedBuffer = await sharp(req.file.buffer)
+            .resize(IMAGE_MAX_WIDTH, IMAGE_MAX_WIDTH, {
+                fit: 'cover',
+                withoutEnlargement: true
+            })
+            .webp({ quality: IMAGE_QUALITY })
+            .toBuffer();
+
+        const objectName = `avatars/${req.user.id}-${Date.now()}.webp`;
 
         // Ensure bucket exists
         const exists = await minioClient.bucketExists(bucketName);
         if (!exists) await minioClient.makeBucket(bucketName, 'us-east-1');
 
-        await minioClient.putObject(bucketName, objectName, req.file.buffer);
+        await minioClient.putObject(bucketName, objectName, compressedBuffer, {
+            'Content-Type': 'image/webp'
+        });
 
         // Construct generic URL
         const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-        const url = `${protocol}://${process.env.MINIO_ENDPOINT.replace('http://', '').replace('https://', '')}:${process.env.MINIO_PORT}/${bucketName}/${objectName}`;
+        const endpoint = process.env.MINIO_ENDPOINT.replace('http://', '').replace('https://', '');
+        const url = `${protocol}://${endpoint}:${process.env.MINIO_PORT}/${bucketName}/${objectName}`;
 
         await pool.query('UPDATE users SET avatar_url=$1 WHERE id=$2', [url, req.user.id]);
 
@@ -137,3 +159,35 @@ exports.uploadAvatar = async (req, res) => {
         res.status(500).json({ message: 'Error subiendo avatar', error: err.message });
     }
 };
+
+// Delete Avatar
+exports.deleteAvatar = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Get current avatar URL
+        const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [userId]);
+        const avatarUrl = userResult.rows[0]?.avatar_url;
+
+        if (avatarUrl) {
+            // Try to delete from MinIO
+            try {
+                const bucketName = process.env.MINIO_BUCKET_NAME;
+                const urlParts = avatarUrl.split('/');
+                const objectName = `avatars/${urlParts[urlParts.length - 1]}`;
+                await minioClient.removeObject(bucketName, objectName);
+            } catch (minioErr) {
+                console.warn('Could not delete avatar from MinIO:', minioErr.message);
+            }
+        }
+
+        // Clear avatar_url in database
+        await pool.query('UPDATE users SET avatar_url = NULL WHERE id = $1', [userId]);
+
+        res.json({ message: 'Avatar eliminado', avatar_url: null });
+    } catch (err) {
+        console.error('Error eliminando avatar:', err);
+        res.status(500).json({ message: 'Error eliminando avatar' });
+    }
+};
+

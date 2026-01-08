@@ -8,4 +8,14 @@ const admin = require('../middleware/adminMiddleware');
 router.get('/smtp', auth, admin, settingsController.getSmtpSettings);
 router.put('/smtp', auth, admin, settingsController.updateSmtpSettings);
 
+// Public settings (no auth) - for branding
+router.get('/public', settingsController.getPublicSettings);
+
+// OAuth settings (admin only)
+router.get('/oauth', auth, admin, settingsController.getOAuthSettings);
+router.put('/oauth', auth, admin, settingsController.updateOAuthSettings);
+
+// Public OAuth settings (no auth) - for login page
+router.get('/oauth/public', settingsController.getPublicOAuthSettings);
+
 module.exports = router;

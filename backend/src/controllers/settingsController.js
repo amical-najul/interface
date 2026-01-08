@@ -102,3 +102,122 @@ exports.updateSmtpSettings = async (req, res) => {
         res.status(500).json({ message: 'Error al guardar configuración' });
     }
 };
+
+// Get public settings (no auth required) - only branding info
+exports.getPublicSettings = async (req, res) => {
+    try {
+        const keys = ['app_name', 'app_favicon_url'];
+        const result = await pool.query(
+            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
+            [keys]
+        );
+
+        const settings = {
+            app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
+            app_favicon_url: ''
+        };
+
+        result.rows.forEach(row => {
+            if (row.setting_key === 'app_name') settings.app_name = row.setting_value;
+            if (row.setting_key === 'app_favicon_url') settings.app_favicon_url = row.setting_value;
+        });
+
+        res.json(settings);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener configuración pública' });
+    }
+};
+
+// Get OAuth settings (admin only)
+exports.getOAuthSettings = async (req, res) => {
+    try {
+        const keys = ['google_oauth_enabled', 'google_client_id', 'google_client_secret'];
+        const result = await pool.query(
+            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
+            [keys]
+        );
+
+        const settings = {
+            enabled: false,
+            client_id: '',
+            client_secret: ''
+        };
+
+        result.rows.forEach(row => {
+            switch (row.setting_key) {
+                case 'google_oauth_enabled':
+                    settings.enabled = row.setting_value === 'true';
+                    break;
+                case 'google_client_id':
+                    settings.client_id = row.setting_value || '';
+                    break;
+                case 'google_client_secret':
+                    settings.client_secret = row.setting_value ? '••••••••' : '';
+                    break;
+            }
+        });
+
+        res.json(settings);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener configuración OAuth' });
+    }
+};
+
+// Update OAuth settings (admin only)
+exports.updateOAuthSettings = async (req, res) => {
+    const { enabled, client_id, client_secret } = req.body;
+
+    try {
+        const upsert = async (key, value) => {
+            if (value === undefined) return;
+            await pool.query(
+                `INSERT INTO app_settings (setting_key, setting_value, updated_at) 
+                 VALUES ($1, $2, CURRENT_TIMESTAMP) 
+                 ON CONFLICT (setting_key) 
+                 DO UPDATE SET setting_value = $2, updated_at = CURRENT_TIMESTAMP`,
+                [key, value]
+            );
+        };
+
+        if (enabled !== undefined) await upsert('google_oauth_enabled', String(enabled));
+        if (client_id !== undefined) await upsert('google_client_id', client_id);
+
+        // Only update secret if it's not the masked placeholder
+        if (client_secret && client_secret !== '••••••••') {
+            await upsert('google_client_secret', client_secret);
+        }
+
+        res.json({ message: 'Configuración OAuth guardada' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al guardar configuración OAuth' });
+    }
+};
+
+// Get public OAuth settings (no auth) - only client_id and enabled
+exports.getPublicOAuthSettings = async (req, res) => {
+    try {
+        const keys = ['google_oauth_enabled', 'google_client_id'];
+        const result = await pool.query(
+            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
+            [keys]
+        );
+
+        const settings = {
+            enabled: false,
+            client_id: process.env.VITE_GOOGLE_CLIENT_ID || ''
+        };
+
+        result.rows.forEach(row => {
+            if (row.setting_key === 'google_oauth_enabled') settings.enabled = row.setting_value === 'true';
+            if (row.setting_key === 'google_client_id' && row.setting_value) settings.client_id = row.setting_value;
+        });
+
+        res.json(settings);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener configuración OAuth pública' });
+    }
+};
