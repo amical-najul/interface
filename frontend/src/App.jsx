@@ -10,6 +10,9 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminProfilePage from './pages/admin/AdminProfilePage';
 import AdminGeneralSettingsPage from './pages/admin/AdminGeneralSettingsPage';
 import AdminGoogleAuthPage from './pages/admin/AdminGoogleAuthPage';
+import PrivateRoute from './components/PrivateRoute';
+import UserLayout from './layouts/UserLayout';
+import UserDashboardPage from './pages/user/UserDashboardPage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -92,6 +95,15 @@ function App() {
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LoginPage />} />
+
+              {/* User Routes */}
+              <Route path="/dashboard" element={
+                <PrivateRoute>
+                  <UserLayout />
+                </PrivateRoute>
+              }>
+                <Route index element={<UserDashboardPage />} />
+              </Route>
 
               {/* Admin Routes */}
               <Route path="/admin" element={

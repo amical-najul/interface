@@ -85,7 +85,7 @@ function LoginPage() {
             login(data.user, data.token);
 
             if (data.user.role === 'admin') navigate('/admin/users');
-            else alert('Login exitoso (User Dashboard pendiente)');
+            else navigate('/dashboard');
 
         } catch (err) {
             setError(err.message);
@@ -120,7 +120,7 @@ function LoginPage() {
                 login(data.user, data.token);
 
                 if (data.user.role === 'admin') navigate('/admin/users');
-                else alert('Login exitoso (User Dashboard pendiente)');
+                else navigate('/dashboard');
 
             } else {
                 setShowVerification(true);
