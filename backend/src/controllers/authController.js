@@ -1,0 +1,165 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const pool = require('../config/db');
+const emailService = require('../services/emailService');
+
+const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+
+// Registro
+exports.register = async (req, res) => {
+    const { email, password, name } = req.body;
+    try {
+        // Verificar si existe
+        const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            return res.status(400).json({ message: 'El usuario ya existe' });
+        }
+
+        // Hash contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
+        // Generar token de verificación simple (random string)
+        const verificationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+        const newUser = await pool.query(
+            'INSERT INTO users (email, password_hash, is_verified, verification_token, name) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, is_verified, name',
+            [email, hash, false, verificationToken, name || null]
+        );
+
+        // Build verification link
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8090';
+        const verificationLink = `${baseUrl}/?verify=${verificationToken}`;
+
+        // Send verification email using template
+        await emailService.sendAuthEmail('email_verification',
+            { email, name: name || email.split('@')[0] },
+            { link: verificationLink }
+        );
+
+        res.status(201).json({
+            message: 'Usuario creado. Verifica tu email.',
+            user: newUser.rows[0]
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+// Login
+exports.login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(400).json({ message: 'Credenciales inválidas' });
+        }
+
+        const user = result.rows[0];
+
+        // Verificar contraseña
+        const validPass = await bcrypt.compare(password, user.password_hash);
+        if (!validPass) {
+            return res.status(400).json({ message: 'Credenciales inválidas' });
+        }
+
+        // Verificar email confirmado
+        if (!user.is_verified) {
+            return res.status(403).json({ message: 'Debes verificar tu email antes de iniciar sesión.' });
+        }
+
+        // Generar Token JWT
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || 'secret',
+            { expiresIn: '1d' }
+        );
+
+        res.json({
+            message: 'Login exitoso',
+            token,
+            user: { id: user.id, email: user.email, role: user.role, name: user.name }
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+// Verificar Email
+exports.verifyEmail = async (req, res) => {
+    const { token } = req.query;
+    try {
+        const result = await pool.query(
+            'UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1 RETURNING id, email',
+            [token]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(400).json({ message: 'Token inválido o expirado' });
+        }
+
+        res.json({ message: 'Email verificado correctamente', user: result.rows[0] });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+// Google Login
+exports.googleLogin = async (req, res) => {
+    const { token } = req.body;
+    try {
+        // Verificar Token con Google
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.VITE_GOOGLE_CLIENT_ID
+        });
+        const payload = ticket.getPayload();
+        const { email } = payload;
+
+        // Verificar usuario existente
+        let result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        let user = result.rows[0];
+
+        if (!user) {
+            // Crear usuario si no existe
+            const randomPass = Math.random().toString(36).slice(-8);
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(randomPass, salt);
+
+            // Asumiendo que la columna 'role' ya existe por migracion anterior
+            const newUser = await pool.query(
+                "INSERT INTO users (email, password_hash, is_verified, role) VALUES ($1, $2, $3, 'user') RETURNING *",
+                [email, hash, true]
+            );
+            user = newUser.rows[0];
+        }
+
+        // Generar JWT
+        const jwtToken = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'secret',
+            { expiresIn: '1d' }
+        );
+
+        res.json({
+            message: 'Login con Google exitoso',
+            token: jwtToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (err) {
+        console.error('Google Auth Error:', err);
+        res.status(401).json({ message: 'Falló la autenticación con Google: ' + err.message });
+    }
+};

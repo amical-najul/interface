@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    image: ghcr.io/tu-usuario/interfaz-api:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: app_api
+    restart: always
+    environment:
+      - PORT=3000
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_PORT=${MINIO_PORT}
+      - MINIO_USE_SSL=${MINIO_USE_SSL}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+    labels:
+      - "traefik.enable=true"
+      # Router API
+      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=myresolver"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik_proxy"
+    networks:
+      - traefik_proxy
+      - internal_services
+
+  # Frontend Web
+  web:
+    image: ghcr.io/tu-usuario/interfaz-web:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: app_web
+    restart: always
+    environment:
+      - VITE_API_URL=https://api.${DOMAIN_NAME}
+      - VITE_APP_NAME=${VITE_APP_NAME}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+    labels:
+      - "traefik.enable=true"
+      # Router Web
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=myresolver"
+      - "traefik.http.services.web.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik_proxy"
+    networks:
+      - traefik_proxy
+      - internal_services
+
+networks:
+  traefik_proxy:
+    external: true
+  internal_services:
+    external: true

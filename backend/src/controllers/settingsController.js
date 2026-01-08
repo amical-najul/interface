@@ -1,0 +1,104 @@
+const pool = require('../config/db');
+
+// Get SMTP & General settings
+exports.getSmtpSettings = async (req, res) => {
+    try {
+        const keys = [
+            'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
+            'app_name', 'app_favicon_url'
+        ];
+        const result = await pool.query(
+            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
+            [keys]
+        );
+
+        const settings = {
+            enabled: false,
+            sender_email: '',
+            smtp_host: '',
+            smtp_port: '587',
+            smtp_user: '',
+            smtp_pass: '',
+            smtp_secure: 'tls',
+            app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
+            app_favicon_url: ''
+        };
+
+        result.rows.forEach(row => {
+            switch (row.setting_key) {
+                case 'smtp_enabled':
+                    settings.enabled = row.setting_value === 'true';
+                    break;
+                case 'smtp_sender_email':
+                    settings.sender_email = row.setting_value;
+                    break;
+                case 'smtp_host':
+                    settings.smtp_host = row.setting_value;
+                    break;
+                case 'smtp_port':
+                    settings.smtp_port = row.setting_value;
+                    break;
+                case 'smtp_user':
+                    settings.smtp_user = row.setting_value;
+                    break;
+                case 'smtp_pass':
+                    settings.smtp_pass = row.setting_value ? '••••••••' : '';
+                    break;
+                case 'smtp_secure':
+                    settings.smtp_secure = row.setting_value;
+                    break;
+                case 'app_name':
+                    settings.app_name = row.setting_value;
+                    break;
+                case 'app_favicon_url':
+                    settings.app_favicon_url = row.setting_value;
+                    break;
+            }
+        });
+
+        res.json(settings);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener configuración' });
+    }
+};
+
+// Update SMTP & General settings
+exports.updateSmtpSettings = async (req, res) => {
+    const {
+        enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
+        app_name, app_favicon_url
+    } = req.body;
+
+    try {
+        const upsert = async (key, value) => {
+            if (value === undefined) return;
+            await pool.query(
+                `INSERT INTO app_settings (setting_key, setting_value, updated_at) 
+                 VALUES ($1, $2, CURRENT_TIMESTAMP) 
+                 ON CONFLICT (setting_key) 
+                 DO UPDATE SET setting_value = $2, updated_at = CURRENT_TIMESTAMP`,
+                [key, value]
+            );
+        };
+
+        if (enabled !== undefined) await upsert('smtp_enabled', String(enabled));
+        if (sender_email !== undefined) await upsert('smtp_sender_email', sender_email);
+        if (smtp_host !== undefined) await upsert('smtp_host', smtp_host);
+        if (smtp_port !== undefined) await upsert('smtp_port', String(smtp_port));
+        if (smtp_user !== undefined) await upsert('smtp_user', smtp_user);
+
+        if (smtp_pass && smtp_pass !== '••••••••') {
+            await upsert('smtp_pass', smtp_pass);
+        }
+
+        if (smtp_secure !== undefined) await upsert('smtp_secure', smtp_secure);
+        if (app_name !== undefined) await upsert('app_name', app_name);
+        if (app_favicon_url !== undefined) await upsert('app_favicon_url', app_favicon_url);
+
+        res.json({ message: 'Configuración guardada' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al guardar configuración' });
+    }
+};
