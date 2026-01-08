@@ -4,11 +4,13 @@ import PasswordInput from '../components/PasswordInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import VisualGoogleButton from '../components/VisualGoogleButton';
 import { useGoogleConfig } from '../context/GoogleConfigContext';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 function LoginPage() {
     const navigate = useNavigate();
+    const { login } = useAuth(); // Connect to AuthContext
     const { enabled: googleAuthEnabled } = useGoogleConfig();
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
@@ -79,8 +81,8 @@ function LoginPage() {
             if (!res.ok) throw new Error(data.message || 'Error en Google Login');
 
             // Save session
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            // Save session via AuthContext
+            login(data.user, data.token);
 
             if (data.user.role === 'admin') navigate('/admin/users');
             else alert('Login exitoso (User Dashboard pendiente)');
@@ -114,8 +116,8 @@ function LoginPage() {
 
             if (isLogin) {
                 // Login Success
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                // Login Success via AuthContext
+                login(data.user, data.token);
 
                 if (data.user.role === 'admin') navigate('/admin/users');
                 else alert('Login exitoso (User Dashboard pendiente)');
