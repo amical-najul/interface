@@ -7,11 +7,75 @@ const sharp = require('sharp');
 const IMAGE_MAX_WIDTH = 400;
 const IMAGE_QUALITY = 80;
 
-// Admin: Get all users
+// Admin: Get all users with Pagination & Filtering
 exports.getAllUsers = async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, email, role, is_verified, active, name, avatar_url, created_at FROM users ORDER BY id ASC');
-        res.json(result.rows);
+        const { page = 1, limit = 10, search = '', role, active } = req.query;
+
+        const offset = (page - 1) * limit;
+        const params = [];
+        let paramIdx = 1;
+
+        // Build base query
+        let query = 'SELECT id, email, role, is_verified, active, name, avatar_url, created_at FROM users WHERE 1=1';
+        let countQuery = 'SELECT COUNT(*) FROM users WHERE 1=1';
+
+        // Add Search Filter
+        if (search) {
+            const searchClause = ` AND (name ILIKE $${paramIdx} OR email ILIKE $${paramIdx})`;
+            query += searchClause;
+            countQuery += searchClause;
+            params.push(`%${search}%`);
+            paramIdx++;
+        }
+
+        // Add Role Filter
+        if (role && role !== 'all') {
+            const roleClause = ` AND role = $${paramIdx}`;
+            query += roleClause;
+            countQuery += roleClause;
+            params.push(role);
+            paramIdx++;
+        }
+
+        // Add Active Filter
+        if (active && active !== 'all') {
+            const activeClause = ` AND active = $${paramIdx}`;
+            query += activeClause;
+            countQuery += activeClause;
+            params.push(active === 'true');
+            paramIdx++;
+        }
+
+        // Add Pagination
+        query += ` ORDER BY id ASC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+
+        // Execute queries
+        const totalResult = await pool.query(countQuery, params); // Params for count are subset, but PG ignores extra params if strictly positional? No, wait. 
+        // FIX: The params array works for both if the index matches, but limit/offset are extra. 
+        // Correction: Need separate params array or slice for count query? 
+        // PG driver doesn't support named parameters easily. 
+        // Simplest strategy: Execute Count Query FIRST with its own params.
+
+        const countParams = [...params]; // Copy params before adding limit/offset
+        const totalRows = await pool.query(countQuery, countParams);
+        const total = parseInt(totalRows.rows[0].count);
+
+        params.push(limit);
+        params.push(offset);
+
+        const result = await pool.query(query, params);
+
+        res.json({
+            data: result.rows,
+            meta: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener usuarios' });
