@@ -8,7 +8,8 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminRoute from './components/AdminRoute';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminProfilePage from './pages/admin/AdminProfilePage';
-import AdminTemplatesPage from './pages/admin/AdminTemplatesPage';
+import AdminGeneralSettingsPage from './pages/admin/AdminGeneralSettingsPage';
+import AdminGoogleAuthPage from './pages/admin/AdminGoogleAuthPage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -101,7 +102,8 @@ function App() {
                 <Route index element={<Navigate to="/admin/profile" replace />} />
                 <Route path="profile" element={<AdminProfilePage />} />
                 <Route path="users" element={<AdminUsersPage />} />
-                <Route path="templates" element={<AdminTemplatesPage />} />
+                <Route path="general" element={<AdminGeneralSettingsPage />} />
+                <Route path="google-auth" element={<AdminGoogleAuthPage />} />
               </Route>
 
               {/* Fallback */}
