@@ -161,11 +161,41 @@ exports.updateProfile = async (req, res) => {
         let params = [name, email];
         let idx = 3;
 
+        let newHash = null;
+
         if (password && password.trim() !== "") {
+            // SECURITY LIMITS (Skip for Admins)
+            if (req.user.role !== 'admin') {
+                // 1. Rate Limit Check (Max 3 changes in 24h)
+                const recentChanges = await pool.query(
+                    `SELECT COUNT(*) FROM password_history 
+                     WHERE user_id = $1 AND created_at > NOW() - INTERVAL '24 HOURS'`,
+                    [userId]
+                );
+
+                if (parseInt(recentChanges.rows[0].count) >= 3) {
+                    return res.status(429).json({ message: 'Límite de cambios de contraseña excedido (máx 3 en 24h).' });
+                }
+
+                // 2. History Check (Last 5 passwords)
+                const history = await pool.query(
+                    `SELECT password_hash FROM password_history 
+                     WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5`,
+                    [userId]
+                );
+
+                for (const entry of history.rows) {
+                    const match = await bcrypt.compare(password, entry.password_hash);
+                    if (match) {
+                        return res.status(400).json({ message: 'Por seguridad, no puedes reutilizar ninguna de tus últimas 5 contraseñas.' });
+                    }
+                }
+            }
+
             const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash(password, salt);
+            newHash = await bcrypt.hash(password, salt);
             query += `, password_hash=$${idx}`;
-            params.push(hash);
+            params.push(newHash);
             idx++;
         }
 
@@ -173,6 +203,15 @@ exports.updateProfile = async (req, res) => {
         params.push(userId);
 
         const result = await pool.query(query, params);
+
+        // 3. Save to History
+        if (newHash) {
+            await pool.query(
+                'INSERT INTO password_history (user_id, password_hash) VALUES ($1, $2)',
+                [userId, newHash]
+            );
+        }
+
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
@@ -184,93 +223,134 @@ exports.updateProfile = async (req, res) => {
 exports.uploadAvatar = async (req, res) => {
     if (!req.file) return res.status(400).json({ message: 'No se subió imagen' });
 
+    const client = await pool.connect();
+
     try {
+        const userId = req.user.id;
         const bucketName = process.env.MINIO_BUCKET_NAME;
-        if (!bucketName) {
-            throw new Error('MINIO_BUCKET_NAME not configured');
+        if (!bucketName) throw new Error('MINIO_BUCKET_NAME not configured');
+
+        // 1. Rate Limit Check (Max 2 changes in 24 hours) - SKIP FOR ADMIN
+        if (req.user.role !== 'admin') {
+            const recentUploads = await client.query(
+                `SELECT COUNT(*) FROM avatar_history 
+                 WHERE user_id = $1 
+                 AND created_at > NOW() - INTERVAL '24 HOURS'`,
+                [userId]
+            );
+
+            if (parseInt(recentUploads.rows[0].count) >= 2) {
+                return res.status(429).json({ message: 'Límite de cambios de foto excedido (máx 2 en 24h).' });
+            }
         }
 
-        // Compress and resize image using Sharp
+        // Compress image
         const compressedBuffer = await sharp(req.file.buffer)
-            .resize(IMAGE_MAX_WIDTH, IMAGE_MAX_WIDTH, {
-                fit: 'cover',
-                withoutEnlargement: true
-            })
+            .resize(IMAGE_MAX_WIDTH, IMAGE_MAX_WIDTH, { fit: 'cover', withoutEnlargement: true })
             .webp({ quality: IMAGE_QUALITY })
             .toBuffer();
 
-        const objectName = `avatars/${req.user.id}-${Date.now()}.webp`;
+        const objectName = `avatars/${userId}-${Date.now()}.webp`;
 
         // Ensure bucket exists
         const exists = await minioClient.bucketExists(bucketName);
         if (!exists) await minioClient.makeBucket(bucketName, 'us-east-1');
 
-        // [OPTIMIZATION] Delete old avatar if exists
-        try {
-            const currentUser = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [req.user.id]);
-            const oldAvatarUrl = currentUser.rows[0]?.avatar_url;
+        // Upload to MinIO
+        await minioClient.putObject(bucketName, objectName, compressedBuffer, { 'Content-Type': 'image/webp' });
 
-            if (oldAvatarUrl) {
-                const urlParts = oldAvatarUrl.split('/');
-                const oldObjectName = `avatars/${urlParts[urlParts.length - 1]}`;
-                await minioClient.removeObject(bucketName, oldObjectName);
-                console.log(`Deleted old avatar: ${oldObjectName}`);
-            }
-        } catch (cleanupErr) {
-            console.warn('Failed to cleanup old avatar:', cleanupErr.message);
-            // Continue with upload even if cleanup fails
-        }
-
-        await minioClient.putObject(bucketName, objectName, compressedBuffer, {
-            'Content-Type': 'image/webp'
-        });
-
-        // Construct browser-accessible URL
+        // Build URL
         const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-        // Use MINIO_PUBLIC_ENDPOINT if set, otherwise fall back to MINIO_ENDPOINT (for external services)
-        const publicEndpoint = (process.env.MINIO_PUBLIC_ENDPOINT || process.env.MINIO_ENDPOINT || 'localhost')
+        const publicEndpoint = (process.env.MINIO_PUBLIC_ENDPOINT || process.env.MINIO_ENDPOINT)
             .replace('http://', '')
             .replace('https://', '');
-        const port = process.env.MINIO_PORT || '9000';
-        const url = `${protocol}://${publicEndpoint}:${port}/${bucketName}/${objectName}`;
 
-        console.log(`Avatar uploaded: ${url}`); // Debug log
+        if (!publicEndpoint) throw new Error('MINIO_ENDPOINT not configured');
 
-        await pool.query('UPDATE users SET avatar_url=$1 WHERE id=$2', [url, req.user.id]);
+        const port = process.env.MINIO_PORT;
+        // If standard ports, don't show port in URL
+        const portStr = (port === '80' || port === '443') ? '' : `:${port}`;
+        const url = `${protocol}://${publicEndpoint}${portStr}/${bucketName}/${objectName}`;
 
+        await client.query('BEGIN');
+
+        // 2. Determine if "Original" (User has no history yet?)
+        const historyCheck = await client.query('SELECT COUNT(*) FROM avatar_history WHERE user_id = $1', [userId]);
+        const isOriginal = parseInt(historyCheck.rows[0].count) === 0;
+
+        // 3. Save to History
+        await client.query(
+            `INSERT INTO avatar_history (user_id, avatar_url, is_original) 
+             VALUES ($1, $2, $3)`,
+            [userId, url, isOriginal]
+        );
+
+        // 4. Update Current Avatar
+        await client.query('UPDATE users SET avatar_url=$1 WHERE id=$2', [url, userId]);
+
+        // 5. Cleanup Policy: Keep "Original" + Last 5
+        // Find photos that are NOT original and NOT in the last 5
+        const cleanup = await client.query(
+            `SELECT id, avatar_url FROM avatar_history 
+             WHERE user_id = $1 
+             AND is_original = FALSE
+             AND id NOT IN (
+                SELECT id FROM avatar_history 
+                WHERE user_id = $1 
+                ORDER BY created_at DESC 
+                LIMIT 5
+             )`,
+            [userId]
+        );
+
+        for (const row of cleanup.rows) {
+            // Delete from MinIO
+            try {
+                const urlParts = row.avatar_url.split('/');
+                const oldObj = `avatars/${urlParts[urlParts.length - 1]}`;
+                await minioClient.removeObject(bucketName, oldObj);
+            } catch (ignored) { console.warn('MinIO delete failed', ignored.message); }
+
+            // Delete from DB
+            await client.query('DELETE FROM avatar_history WHERE id = $1', [row.id]);
+        }
+
+        await client.query('COMMIT');
         res.json({ avatar_url: url });
 
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error('Error subiendo avatar:', err);
         res.status(500).json({ message: 'Error subiendo avatar', error: err.message });
+    } finally {
+        client.release();
     }
 };
 
 // Delete Avatar
 exports.deleteAvatar = async (req, res) => {
     try {
-        const userId = req.user.id;
+        console.log('Delete Avatar Request User:', req.user);
 
-        // Get current avatar URL
-        const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [userId]);
-        const avatarUrl = userResult.rows[0]?.avatar_url;
+        let userId = req.user.id;
 
-        if (avatarUrl) {
-            // Try to delete from MinIO
-            try {
-                const bucketName = process.env.MINIO_BUCKET_NAME;
-                const urlParts = avatarUrl.split('/');
-                const objectName = `avatars/${urlParts[urlParts.length - 1]}`;
-                await minioClient.removeObject(bucketName, objectName);
-            } catch (minioErr) {
-                console.warn('Could not delete avatar from MinIO:', minioErr.message);
-            }
+        // Ensure ID is integer to avoid PG 22P02 error
+        if (typeof userId === 'string') {
+            userId = parseInt(userId, 10);
         }
 
-        // Clear avatar_url in database
+        if (!userId || isNaN(userId)) {
+            console.error('Invalid User ID provided:', req.user.id);
+            return res.status(400).json({ message: 'ID de usuario inválido.' });
+        }
+
+        console.log('Deleting avatar for UserID:', userId);
+
+        // Solo eliminamos la referencia del perfil activo
+        // El archivo físico y el registro en avatar_history se mantienen según política
         await pool.query('UPDATE users SET avatar_url = NULL WHERE id = $1', [userId]);
 
-        res.json({ message: 'Avatar eliminado', avatar_url: null });
+        res.json({ message: 'Avatar eliminado del perfil', avatar_url: null });
     } catch (err) {
         console.error('Error eliminando avatar:', err);
         res.status(500).json({ message: 'Error eliminando avatar' });
@@ -324,13 +404,14 @@ exports.requestEmailChange = async (req, res) => {
         );
 
         // Build confirmation link
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8090';
-        const confirmLink = `${baseUrl}/verify-email-change?token=${changeToken}`;
+        const baseUrl = process.env.FRONTEND_URL;
+        if (!baseUrl) throw new Error('FRONTEND_URL is not defined');
+        const verifyLink = `${baseUrl}/verify-email-change?token=${changeToken}`;
 
         // Send email to NEW email address
         await emailService.sendAuthEmail('email_change',
             { email: newEmail, name: user.name || user.email.split('@')[0] },
-            { link: confirmLink, newEmail: newEmail }
+            { link: verifyLink, newEmail: newEmail }
         );
 
         res.json({

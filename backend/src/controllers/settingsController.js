@@ -22,8 +22,8 @@ exports.getSmtpSettings = async (req, res) => {
             smtp_user: '',
             smtp_pass: '',
             smtp_secure: 'tls',
-            app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
-            app_favicon_url: '',
+            app_name: process.env.VITE_APP_NAME,
+            app_favicon_url: process.env.VITE_APP_FAVICON_URL,
             llm_provider: 'openai',
             llm_model: '',
             llm_api_key: '',
@@ -152,17 +152,11 @@ exports.getPublicSettings = async (req, res) => {
             [keys]
         );
 
-        const settings = {
-            app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
-            app_favicon_url: ''
-        };
-
-        result.rows.forEach(row => {
-            if (row.setting_key === 'app_name') settings.app_name = row.setting_value;
-            if (row.setting_key === 'app_favicon_url') settings.app_favicon_url = row.setting_value;
+        // Return public settings for frontend branding
+        res.json({
+            app_name: process.env.VITE_APP_NAME,
+            app_favicon_url: process.env.VITE_APP_FAVICON_URL
         });
-
-        res.json(settings);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener configuración pública' });
@@ -239,23 +233,10 @@ exports.updateOAuthSettings = async (req, res) => {
 // Get public OAuth settings (no auth) - only client_id and enabled
 exports.getPublicOAuthSettings = async (req, res) => {
     try {
-        const keys = ['google_oauth_enabled', 'google_client_id'];
-        const result = await pool.query(
-            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
-            [keys]
-        );
-
-        const settings = {
-            enabled: false,
-            client_id: process.env.VITE_GOOGLE_CLIENT_ID || ''
-        };
-
-        result.rows.forEach(row => {
-            if (row.setting_key === 'google_oauth_enabled') settings.enabled = row.setting_value === 'true';
-            if (row.setting_key === 'google_client_id' && row.setting_value) settings.client_id = row.setting_value;
+        res.json({
+            enabled: process.env.VITE_GOOGLE_AUTH_ENABLED === 'true',
+            client_id: process.env.VITE_GOOGLE_CLIENT_ID
         });
-
-        res.json(settings);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener configuración OAuth pública' });

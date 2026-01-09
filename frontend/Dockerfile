@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Build arguments for Vite (must be set at build time)
 ARG VITE_API_URL=http://localhost:3001/api

@@ -36,8 +36,7 @@ const AdminUsersPage = () => {
     // Edit/Create State
     const [editingUser, setEditingUser] = useState(null);
     const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, success, error
-
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const API_URL = import.meta.env.VITE_API_URL;
 
     // Fetch Users
     const fetchUsers = useCallback(async () => {

@@ -3,10 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import PasswordInput from '../components/PasswordInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import VisualGoogleButton from '../components/VisualGoogleButton';
+import AlertModal from '../components/AlertModal';
 import { useGoogleConfig } from '../context/GoogleConfigContext';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import authService from '../services/authService';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -15,6 +15,19 @@ function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Alert State
+    const [alertData, setAlertData] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info'
+    });
+
+    const closeAlert = () => setAlertData(prev => ({ ...prev, isOpen: false }));
+    const showAlert = (title, message, type = 'info') => {
+        setAlertData({ isOpen: true, title, message, type });
+    };
 
     // Form State
     const [email, setEmail] = useState('');
@@ -43,25 +56,24 @@ function LoginPage() {
             localStorage.removeItem('user');
             localStorage.removeItem('token');
         }
-    }, []);
+    }, [navigate]);
 
     const handleVisualClick = () => {
-        alert("La autenticación con Google no está configurada. Por favor, inicia sesión con email y contraseña, y configura las credenciales en el panel de administración.");
+        showAlert(
+            "Configuración Requerida",
+            "La autenticación con Google no está configurada. Por favor, inicia sesión con email y contraseña.",
+            "info"
+        );
     };
 
     const verifyEmail = async (token) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`${API_URL}/auth/verify-email?token=${token}`);
-            const data = await res.json();
-            if (res.ok) {
-                alert("¡Cuenta verificada exitosamente! Ahora puedes iniciar sesión.");
-                window.history.replaceState({}, document.title, "/");
-            } else {
-                setError(data.message || "Error verificando email");
-            }
+            await authService.verifyEmail(token);
+            showAlert("¡Verificado!", "Cuenta verificada exitosamente. Ahora puedes iniciar sesión.", "success");
+            window.history.replaceState({}, document.title, "/");
         } catch (err) {
-            setError("Error de conexión al verificar email");
+            setError(err.message || "Error verificando email");
         } finally {
             setIsLoading(false);
         }
@@ -71,16 +83,8 @@ function LoginPage() {
     const handleGoogleSuccess = async (tokenResponse) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`${API_URL}/auth/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: tokenResponse.access_token }),
-            });
+            const data = await authService.googleLogin(tokenResponse.access_token);
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Error en Google Login');
-
-            // Save session
             // Save session via AuthContext
             login(data.user, data.token);
 
@@ -99,30 +103,15 @@ function LoginPage() {
         setError('');
         setIsLoading(true);
 
-        const endpoint = isLogin ? '/auth/login' : '/auth/register';
-
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Error en la solicitud');
-            }
-
             if (isLogin) {
-                // Login Success
-                // Login Success via AuthContext
+                const data = await authService.login(email, password);
                 login(data.user, data.token);
 
                 if (data.user.role === 'admin') navigate('/admin/users');
                 else navigate('/dashboard');
-
             } else {
+                await authService.register(email, password);
                 setShowVerification(true);
             }
 
@@ -241,6 +230,14 @@ function LoginPage() {
                     </p>
                 </div>
             </div>
+
+            <AlertModal
+                isOpen={alertData.isOpen}
+                onClose={closeAlert}
+                title={alertData.title}
+                message={alertData.message}
+                type={alertData.type}
+            />
         </div>
     );
 }

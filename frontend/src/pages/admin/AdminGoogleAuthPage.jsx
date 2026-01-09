@@ -45,7 +45,7 @@ const AdminGoogleAuthPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const API_URL = import.meta.env.VITE_API_URL;
 
     // --- Data Fetching ---
     const fetchData = async () => {

@@ -30,7 +30,8 @@ exports.register = async (req, res) => {
         );
 
         // Build verification link
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8090';
+        const baseUrl = process.env.FRONTEND_URL;
+        if (!baseUrl) throw new Error('FRONTEND_URL is not defined');
         const verificationLink = `${baseUrl}/?verify=${verificationToken}`;
 
         // Send verification email using template
@@ -75,7 +76,7 @@ exports.login = async (req, res) => {
         // Generar Token JWT
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'secret',
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
@@ -145,7 +146,7 @@ exports.googleLogin = async (req, res) => {
         // Generar JWT
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'secret',
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
@@ -206,7 +207,8 @@ exports.forgotPassword = async (req, res) => {
         );
 
         // Build reset link
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8090';
+        const baseUrl = process.env.FRONTEND_URL;
+        if (!baseUrl) throw new Error('FRONTEND_URL not configured');
         const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
         // Send email using template

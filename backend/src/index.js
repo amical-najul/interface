@@ -60,25 +60,53 @@ const initDbAndStartServer = async () => {
         await ensureColumn('users', 'active', 'BOOLEAN DEFAULT TRUE');
         await ensureColumn('users', 'role', "VARCHAR(50) DEFAULT 'user'");
 
+        // 3. Load Dynamic Settings
+        try {
+            const { decrypt } = require('./utils/encryption');
+            const settingsRes = await pool.query("SELECT setting_key, setting_value, is_encrypted FROM advanced_settings WHERE setting_key = 'jwt_secret'");
+
+            if (settingsRes.rows.length > 0) {
+                const jwtSetting = settingsRes.rows[0];
+                let secret = jwtSetting.setting_value;
+
+                if (jwtSetting.is_encrypted) {
+                    secret = decrypt(secret);
+                }
+
+                if (secret && secret.length >= 32) {
+                    process.env.JWT_SECRET = secret;
+                    console.log('🔐 Dynamic JWT Secret loaded from database');
+                }
+            }
+        } catch (settingsErr) {
+            console.error('Warning: Failed to load dynamic settings:', settingsErr.message);
+        }
+
         // 3. Admin Seeding
-        const adminEmail = process.env.ADMIN_EMAIL || 'jock.alcantara@gmail.com';
-        const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', [adminEmail]);
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
 
-        if (adminCheck.rows.length === 0) {
-            console.log('Seeding: Creating initial Admin user...');
-            const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', salt);
-
-            await pool.query(
-                "INSERT INTO users (email, password_hash, role, is_verified, active, name) VALUES ($1, $2, 'admin', TRUE, TRUE, 'Admin')",
-                [adminEmail, hash]
-            );
+        if (!adminEmail || !adminPassword) {
+            console.warn('⚠️ Admin seeding skipped: ADMIN_EMAIL or ADMIN_PASSWORD not set in .env');
         } else {
-            // Ensure permissions
-            const existing = adminCheck.rows[0];
-            if (existing.role !== 'admin') {
-                console.log('Seeding: Promoting user to admin...');
-                await pool.query("UPDATE users SET role='admin' WHERE email=$1", [adminEmail]);
+            const adminCheck = await pool.query('SELECT * FROM users WHERE email = $1', [adminEmail]);
+
+            if (adminCheck.rows.length === 0) {
+                console.log('Seeding: Creating initial Admin user...');
+                const salt = await bcrypt.genSalt(10);
+                const hash = await bcrypt.hash(adminPassword, salt);
+
+                await pool.query(
+                    "INSERT INTO users (email, password_hash, role, is_verified, active, name) VALUES ($1, $2, 'admin', TRUE, TRUE, 'Admin')",
+                    [adminEmail, hash]
+                );
+            } else {
+                // Ensure permissions
+                const existing = adminCheck.rows[0];
+                if (existing.role !== 'admin') {
+                    console.log('Seeding: Promoting user to admin...');
+                    await pool.query("UPDATE users SET role='admin' WHERE email=$1", [adminEmail]);
+                }
             }
         }
 

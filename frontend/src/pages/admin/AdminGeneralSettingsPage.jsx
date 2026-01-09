@@ -1,158 +1,49 @@
-import { useState, useEffect } from 'react';
-import GeneralSettings from './templates/GeneralSettings';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
+import AdminTabs from '../../components/AdminTabs';
+import GeneralTab from './tabs/GeneralTab';
+import AiTab from './tabs/AiTab';
+import SecurityTab from './tabs/SecurityTab';
+import SmtpTab from './tabs/SmtpTab';
+import { Layout, Cpu, Shield, Mail } from 'lucide-react';
 
 const AdminGeneralSettingsPage = () => {
-    const { token } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [settingsSaving, setSettingsSaving] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const [activeTab, setActiveTab] = useState('general');
 
-    const [settings, setSettings] = useState({
-        app_name: '',
-        app_favicon_url: '',
-        llm_provider: 'openai',
-        llm_model: '',
-        llm_api_key: '',
-        llm_provider_secondary: '',
-        llm_model_secondary: '',
-        llm_api_key_secondary: ''
-    });
+    const tabs = [
+        { id: 'general', label: 'General', icon: Layout },
+        { id: 'ai', label: 'Inteligencia Artificial', icon: Cpu },
+        { id: 'security', label: 'Seguridad', icon: Shield },
+        { id: 'smtp', label: 'Correo SMTP', icon: Mail }
+    ];
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-    // Fetch settings
-    const fetchSettings = async () => {
-        try {
-            const res = await fetch(`${API_URL}/settings/smtp`, {
-                headers: { 'x-auth-token': token }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setSettings(prev => ({
-                    ...prev,
-                    app_name: data.app_name,
-                    app_favicon_url: data.app_favicon_url,
-                    llm_provider: data.llm_provider || 'openai',
-                    llm_model: data.llm_model || '',
-                    llm_api_key: data.llm_api_key || '',
-                    llm_provider_secondary: data.llm_provider_secondary || '',
-                    llm_model_secondary: data.llm_model_secondary || '',
-                    llm_api_key_secondary: data.llm_api_key_secondary || ''
-                }));
-            }
-        } catch (err) {
-            console.error('Error fetching settings:', err);
-            setError('Error al cargar configuración');
-        } finally {
-            setLoading(false);
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'general': return <GeneralTab />;
+            case 'ai': return <AiTab />;
+            case 'security': return <SecurityTab />;
+            case 'smtp': return <SmtpTab />;
+            default: return <GeneralTab />;
         }
-    };
-
-    useEffect(() => {
-        if (token) fetchSettings();
-    }, [token]);
-
-    const handleSettingsChange = (field, value) => {
-        setSettings(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSaveSettings = async () => {
-        setSettingsSaving(true);
-        setError('');
-        setSuccess('');
-
-        // Payload Isolation: Only send general and LLM settings
-        const payload = {
-            app_name: settings.app_name,
-            app_favicon_url: settings.app_favicon_url,
-            llm_provider: settings.llm_provider,
-            llm_model: settings.llm_model,
-            llm_api_key: settings.llm_api_key,
-            llm_provider_secondary: settings.llm_provider_secondary,
-            llm_model_secondary: settings.llm_model_secondary,
-            llm_api_key_secondary: settings.llm_api_key_secondary
-        };
-
-        try {
-            const res = await fetch(`${API_URL}/settings/smtp`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                setSuccess('Ajustes generales guardados correctamente');
-                if (settings.app_name) document.title = settings.app_name;
-            } else {
-                setError(data.message || 'Error al guardar');
-            }
-        } catch (err) {
-            setError('Error de conexión');
-        } finally {
-            setSettingsSaving(false);
-        }
-    };
-
-    const handleFaviconUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        setSettingsSaving(true);
-        try {
-            const res = await fetch(`${API_URL}/users/avatar`, {
-                method: 'POST',
-                headers: { 'x-auth-token': token },
-                body: formData
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setSettings(prev => ({ ...prev, app_favicon_url: data.avatar_url }));
-                setSuccess('Favicon subido. Recuerda guardar los cambios.');
-            } else {
-                setError(data.message || 'Error al subir favicon');
-            }
-        } catch (err) {
-            setError('Error de conexión');
-        } finally {
-            setSettingsSaving(false);
-        }
-    };
-
-    const handleFaviconDelete = () => {
-        setSettings(prev => ({ ...prev, app_favicon_url: '' }));
     };
 
     return (
-        <div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Ajustes Generales</h2>
-                <p className="text-gray-500">Personaliza la identidad visual y configuración de IA.</p>
+                <h1 className="text-2xl font-bold text-gray-900">Ajustes del Sistema</h1>
+                <p className="max-w-2xl text-sm text-gray-500">
+                    Administra la configuración global, integraciones y parámetros de seguridad.
+                </p>
             </div>
 
-            {loading ? (
-                <p>Cargando...</p>
-            ) : (
-                <GeneralSettings
-                    settings={settings}
-                    handleSettingsChange={handleSettingsChange}
-                    handleFaviconUpload={handleFaviconUpload}
-                    handleFaviconDelete={handleFaviconDelete}
-                    handleSaveSettings={handleSaveSettings}
-                    settingsSaving={settingsSaving}
-                    error={error}
-                    success={success}
-                />
-            )}
+            <AdminTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+            />
+
+            <div className="mt-6">
+                {renderTabContent()}
+            </div>
         </div>
     );
 };
