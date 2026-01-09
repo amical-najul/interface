@@ -20,4 +20,8 @@ router.put('/profile/me', auth, userController.updateProfile);
 router.post('/avatar', auth, upload.single('avatar'), userController.uploadAvatar);
 router.delete('/avatar', auth, userController.deleteAvatar);
 
+// Email Change Routes
+router.post('/change-email', auth, userController.requestEmailChange);
+router.post('/verify-email-change', userController.verifyEmailChange);
+
 module.exports = router;

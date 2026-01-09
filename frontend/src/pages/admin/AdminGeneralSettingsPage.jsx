@@ -11,7 +11,13 @@ const AdminGeneralSettingsPage = () => {
 
     const [settings, setSettings] = useState({
         app_name: '',
-        app_favicon_url: ''
+        app_favicon_url: '',
+        llm_provider: 'openai',
+        llm_model: '',
+        llm_api_key: '',
+        llm_provider_secondary: '',
+        llm_model_secondary: '',
+        llm_api_key_secondary: ''
     });
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -27,7 +33,13 @@ const AdminGeneralSettingsPage = () => {
                 setSettings(prev => ({
                     ...prev,
                     app_name: data.app_name,
-                    app_favicon_url: data.app_favicon_url
+                    app_favicon_url: data.app_favicon_url,
+                    llm_provider: data.llm_provider || 'openai',
+                    llm_model: data.llm_model || '',
+                    llm_api_key: data.llm_api_key || '',
+                    llm_provider_secondary: data.llm_provider_secondary || '',
+                    llm_model_secondary: data.llm_model_secondary || '',
+                    llm_api_key_secondary: data.llm_api_key_secondary || ''
                 }));
             }
         } catch (err) {
@@ -51,10 +63,16 @@ const AdminGeneralSettingsPage = () => {
         setError('');
         setSuccess('');
 
-        // Payload Isolation: Only send general settings
+        // Payload Isolation: Only send general and LLM settings
         const payload = {
             app_name: settings.app_name,
-            app_favicon_url: settings.app_favicon_url
+            app_favicon_url: settings.app_favicon_url,
+            llm_provider: settings.llm_provider,
+            llm_model: settings.llm_model,
+            llm_api_key: settings.llm_api_key,
+            llm_provider_secondary: settings.llm_provider_secondary,
+            llm_model_secondary: settings.llm_model_secondary,
+            llm_api_key_secondary: settings.llm_api_key_secondary
         };
 
         try {
@@ -110,11 +128,15 @@ const AdminGeneralSettingsPage = () => {
         }
     };
 
+    const handleFaviconDelete = () => {
+        setSettings(prev => ({ ...prev, app_favicon_url: '' }));
+    };
+
     return (
         <div>
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Ajustes Generales</h2>
-                <p className="text-gray-500">Personaliza la identidad visual de tu aplicación.</p>
+                <p className="text-gray-500">Personaliza la identidad visual y configuración de IA.</p>
             </div>
 
             {loading ? (
@@ -124,6 +146,7 @@ const AdminGeneralSettingsPage = () => {
                     settings={settings}
                     handleSettingsChange={handleSettingsChange}
                     handleFaviconUpload={handleFaviconUpload}
+                    handleFaviconDelete={handleFaviconDelete}
                     handleSaveSettings={handleSaveSettings}
                     settingsSaving={settingsSaving}
                     error={error}

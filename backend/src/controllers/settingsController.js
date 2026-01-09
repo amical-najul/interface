@@ -5,7 +5,9 @@ exports.getSmtpSettings = async (req, res) => {
     try {
         const keys = [
             'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
-            'app_name', 'app_favicon_url'
+            'app_name', 'app_favicon_url',
+            'llm_provider', 'llm_model', 'llm_api_key',
+            'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary'
         ];
         const result = await pool.query(
             'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
@@ -21,7 +23,13 @@ exports.getSmtpSettings = async (req, res) => {
             smtp_pass: '',
             smtp_secure: 'tls',
             app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
-            app_favicon_url: ''
+            app_favicon_url: '',
+            llm_provider: 'openai',
+            llm_model: '',
+            llm_api_key: '',
+            llm_provider_secondary: '',
+            llm_model_secondary: '',
+            llm_api_key_secondary: ''
         };
 
         result.rows.forEach(row => {
@@ -53,6 +61,24 @@ exports.getSmtpSettings = async (req, res) => {
                 case 'app_favicon_url':
                     settings.app_favicon_url = row.setting_value;
                     break;
+                case 'llm_provider':
+                    settings.llm_provider = row.setting_value;
+                    break;
+                case 'llm_model':
+                    settings.llm_model = row.setting_value;
+                    break;
+                case 'llm_api_key':
+                    settings.llm_api_key = row.setting_value ? '••••••••' : '';
+                    break;
+                case 'llm_provider_secondary':
+                    settings.llm_provider_secondary = row.setting_value;
+                    break;
+                case 'llm_model_secondary':
+                    settings.llm_model_secondary = row.setting_value;
+                    break;
+                case 'llm_api_key_secondary':
+                    settings.llm_api_key_secondary = row.setting_value ? '••••••••' : '';
+                    break;
             }
         });
 
@@ -67,7 +93,9 @@ exports.getSmtpSettings = async (req, res) => {
 exports.updateSmtpSettings = async (req, res) => {
     const {
         enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
-        app_name, app_favicon_url
+        app_name, app_favicon_url,
+        llm_provider, llm_model, llm_api_key,
+        llm_provider_secondary, llm_model_secondary, llm_api_key_secondary
     } = req.body;
 
     try {
@@ -95,6 +123,18 @@ exports.updateSmtpSettings = async (req, res) => {
         if (smtp_secure !== undefined) await upsert('smtp_secure', smtp_secure);
         if (app_name !== undefined) await upsert('app_name', app_name);
         if (app_favicon_url !== undefined) await upsert('app_favicon_url', app_favicon_url);
+
+        if (llm_provider !== undefined) await upsert('llm_provider', llm_provider);
+        if (llm_model !== undefined) await upsert('llm_model', llm_model);
+        if (llm_api_key && llm_api_key !== '••••••••') {
+            await upsert('llm_api_key', llm_api_key);
+        }
+
+        if (llm_provider_secondary !== undefined) await upsert('llm_provider_secondary', llm_provider_secondary);
+        if (llm_model_secondary !== undefined) await upsert('llm_model_secondary', llm_model_secondary);
+        if (llm_api_key_secondary && llm_api_key_secondary !== '••••••••') {
+            await upsert('llm_api_key_secondary', llm_api_key_secondary);
+        }
 
         res.json({ message: 'Configuración guardada' });
     } catch (err) {

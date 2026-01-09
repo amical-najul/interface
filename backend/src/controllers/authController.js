@@ -164,3 +164,126 @@ exports.googleLogin = async (req, res) => {
         res.status(401).json({ message: 'Falló la autenticación con Google: ' + err.message });
     }
 };
+
+// ==========================================
+// PASSWORD RESET FLOW
+// ==========================================
+
+/**
+ * Forgot Password - Send reset email
+ * POST /api/auth/forgot-password
+ */
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        // Validar email
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ message: 'Email inválido' });
+        }
+
+        // Buscar usuario
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+        if (result.rows.length === 0) {
+            // Por seguridad, no revelar si el email existe
+            return res.json({
+                message: 'Si el email existe, recibirás un correo con instrucciones'
+            });
+        }
+
+        const user = result.rows[0];
+
+        // Generar token seguro
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 3600000); // 1 hora
+
+        // Guardar token en BD
+        await pool.query(
+            `INSERT INTO password_reset_tokens (user_id, token, expires_at) 
+             VALUES ($1, $2, $3)`,
+            [user.id, resetToken, expiresAt]
+        );
+
+        // Build reset link
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8090';
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+
+        // Send email using template
+        await emailService.sendAuthEmail('password_reset',
+            { email: user.email, name: user.name || user.email.split('@')[0] },
+            { link: resetLink }
+        );
+
+        res.json({
+            message: 'Si el email existe, recibirás un correo con instrucciones'
+        });
+
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+/**
+ * Reset Password - Change password with token
+ * POST /api/auth/reset-password
+ */
+exports.resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    try {
+        // Validar inputs
+        if (!token || !newPassword) {
+            return res.status(400).json({ message: 'Token y contraseña son requeridos' });
+        }
+
+        // Validar contraseña
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                message: 'La contraseña debe tener al menos 8 caracteres'
+            });
+        }
+
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+            return res.status(400).json({
+                message: 'La contraseña debe contener mayúsculas, minúsculas y números'
+            });
+        }
+
+        // Buscar token válido
+        const tokenResult = await pool.query(
+            `SELECT * FROM password_reset_tokens 
+             WHERE token = $1 AND used = FALSE AND expires_at > NOW()`,
+            [token]
+        );
+
+        if (tokenResult.rows.length === 0) {
+            return res.status(400).json({ message: 'Token inválido o expirado' });
+        }
+
+        const resetToken = tokenResult.rows[0];
+
+        // Hash nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(newPassword, salt);
+
+        // Actualizar contraseña
+        await pool.query(
+            'UPDATE users SET password_hash = $1 WHERE id = $2',
+            [hash, resetToken.user_id]
+        );
+
+        // Marcar token como usado
+        await pool.query(
+            'UPDATE password_reset_tokens SET used = TRUE WHERE id = $1',
+            [resetToken.id]
+        );
+
+        res.json({ message: 'Contraseña actualizada exitosamente' });
+
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};

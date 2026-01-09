@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import PasswordInput from '../components/PasswordInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import VisualGoogleButton from '../components/VisualGoogleButton';
@@ -191,9 +191,9 @@ function LoginPage() {
                             />
                             {isLogin && (
                                 <div className="flex justify-end mt-2">
-                                    <a href="#" className="text-sm text-[#008a60] hover:underline font-medium">
+                                    <Link to="/forgot-password" className="text-sm text-[#008a60] hover:underline font-medium">
                                         ¿Olvidaste tu contraseña?
-                                    </a>
+                                    </Link>
                                 </div>
                             )}
                         </div>

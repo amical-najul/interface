@@ -26,4 +26,8 @@ CREATE INDEX IF NOT EXISTS idx_app_settings_key ON app_settings(setting_key);
 --
 -- Google OAuth:
 --   google_oauth_enabled, google_client_id, google_client_secret
+--
+-- IA / LLM:
+--   Primary: llm_provider, llm_model, llm_api_key
+--   Secondary: llm_provider_secondary, llm_model_secondary, llm_api_key_secondary
 -- =============================================

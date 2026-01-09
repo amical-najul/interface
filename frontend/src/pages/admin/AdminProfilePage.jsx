@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import AlertModal from '../../components/AlertModal';
 
 const AdminProfilePage = () => {
     const { user, token, updateProfile } = useAuth();
@@ -10,7 +11,22 @@ const AdminProfilePage = () => {
     const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, success, error
     const [avatarLoading, setAvatarLoading] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // Alert State
+    const [alertData, setAlertData] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info' // info, success, error
+    });
+
     const fileInputRef = useRef(null);
+
+    const closeAlert = () => setAlertData(prev => ({ ...prev, isOpen: false }));
+
+    const showAlert = (title, message, type = 'info') => {
+        setAlertData({ isOpen: true, title, message, type });
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -66,11 +82,12 @@ const AdminProfilePage = () => {
             if (res.ok) {
                 const data = await res.json();
                 updateProfile({ ...user, avatar_url: data.avatar_url });
+                // Optional: success alert or just let the UI update silently as requested before
             } else {
-                alert('Error subiendo imagen');
+                showAlert('Error', 'No se pudo subir la imagen. Inténtalo de nuevo.', 'error');
             }
         } catch (err) {
-            alert('Error subiendo imagen');
+            showAlert('Error', 'Error de conexión al subir la imagen.', 'error');
         } finally {
             setAvatarLoading(false);
         }
@@ -87,10 +104,10 @@ const AdminProfilePage = () => {
             if (res.ok) {
                 updateProfile({ ...user, avatar_url: null });
             } else {
-                alert('Error eliminando avatar');
+                showAlert('Error', 'Error eliminando avatar.', 'error');
             }
         } catch (err) {
-            alert('Error de conexión');
+            showAlert('Error', 'Error de conexión al eliminar avatar.', 'error');
         } finally {
             setAvatarLoading(false);
         }
@@ -207,6 +224,59 @@ const AdminProfilePage = () => {
                 </form>
             </div>
 
+            {/* Change Email Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Cambiar Email</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                    Se enviará un correo de confirmación a la nueva dirección de email.
+                </p>
+                <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const newEmail = e.target.newEmail.value;
+
+                    try {
+                        const res = await fetch(`${API_URL}/users/change-email`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-auth-token': token
+                            },
+                            body: JSON.stringify({ newEmail })
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            showAlert('Email Enviado', data.message, 'success');
+                            e.target.reset();
+                        } else {
+                            showAlert('Error', data.message || 'Error al solicitar cambio de email', 'error');
+                        }
+                    } catch (err) {
+                        showAlert('Error', 'Error de conexión', 'error');
+                    }
+                }}>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nuevo Email
+                        </label>
+                        <input
+                            type="email"
+                            name="newEmail"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#008a60] focus:border-transparent outline-none"
+                            required
+                            placeholder="nuevo@email.com"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-[#008a60] text-white font-medium rounded-lg hover:bg-[#007a55] transition-colors"
+                    >
+                        Solicitar Cambio de Email
+                    </button>
+                </form>
+            </div>
+
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -214,6 +284,14 @@ const AdminProfilePage = () => {
                 title="Eliminar Foto de Perfil"
                 message="¿Estás seguro de que quieres eliminar tu foto de perfil? Esta acción no se puede deshacer."
                 confirmText="Sí, eliminar"
+            />
+
+            <AlertModal
+                isOpen={alertData.isOpen}
+                onClose={closeAlert}
+                title={alertData.title}
+                message={alertData.message}
+                type={alertData.type}
             />
         </div>
     );

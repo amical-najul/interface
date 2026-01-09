@@ -4,6 +4,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleConfigContext } from './context/GoogleConfigContext';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailChangePage from './pages/VerifyEmailChangePage';
 import AdminLayout from './layouts/AdminLayout';
 import AdminRoute from './components/AdminRoute';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -95,6 +98,9 @@ function App() {
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email-change" element={<VerifyEmailChangePage />} />
 
               {/* User Routes */}
               <Route path="/dashboard" element={
