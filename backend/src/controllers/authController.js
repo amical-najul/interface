@@ -73,6 +73,15 @@ exports.login = async (req, res) => {
             return res.status(403).json({ message: 'Debes verificar tu email antes de iniciar sesión.' });
         }
 
+        // Block deleted or inactive users
+        if (user.status === 'deleted') {
+            return res.status(403).json({ message: 'Esta cuenta ha sido eliminada.' });
+        }
+
+        if (!user.active || user.status === 'inactive') {
+            return res.status(403).json({ message: 'Tu cuenta está suspendida. Contacta al administrador.' });
+        }
+
         // Generar Token JWT
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },

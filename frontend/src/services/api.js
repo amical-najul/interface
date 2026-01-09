@@ -6,8 +6,9 @@ if (!API_URL) console.warn('VITE_API_URL is missing!');
  */
 const api = {
     get: async (endpoint, token = null) => {
+        const authToken = token || localStorage.getItem('token');
         const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['x-auth-token'] = token;
+        if (authToken) headers['x-auth-token'] = authToken;
 
         const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'GET',
@@ -17,20 +18,27 @@ const api = {
     },
 
     post: async (endpoint, body, token = null) => {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['x-auth-token'] = token;
+        const authToken = token || localStorage.getItem('token');
+        const headers = {};
+
+        if (!(body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        if (authToken) headers['x-auth-token'] = authToken;
 
         const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
             headers,
-            body: JSON.stringify(body)
+            body: body instanceof FormData ? body : JSON.stringify(body)
         });
         return handleResponse(res);
     },
 
     put: async (endpoint, body, token = null) => {
+        const authToken = token || localStorage.getItem('token');
         const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['x-auth-token'] = token;
+        if (authToken) headers['x-auth-token'] = authToken;
 
         const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'PUT',
@@ -40,14 +48,24 @@ const api = {
         return handleResponse(res);
     },
 
-    delete: async (endpoint, token = null) => {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['x-auth-token'] = token;
+    delete: async (endpoint, options = {}, token = null) => {
+        // Support token as 2nd or 3rd arg for backward compatibility or explicit options
+        let authToken = token || (typeof options === 'string' ? options : null) || localStorage.getItem('token');
 
-        const res = await fetch(`${API_URL}${endpoint}`, {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['x-auth-token'] = authToken;
+
+        const fetchOptions = {
             method: 'DELETE',
             headers
-        });
+        };
+
+        // Handle Body in Delete (for password confirmation)
+        if (options && typeof options === 'object' && options.data) {
+            fetchOptions.body = JSON.stringify(options.data);
+        }
+
+        const res = await fetch(`${API_URL}${endpoint}`, fetchOptions);
         return handleResponse(res);
     }
 };

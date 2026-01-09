@@ -244,11 +244,20 @@ exports.uploadAvatar = async (req, res) => {
             }
         }
 
-        // Compress image
-        const compressedBuffer = await sharp(req.file.buffer)
-            .resize(IMAGE_MAX_WIDTH, IMAGE_MAX_WIDTH, { fit: 'cover', withoutEnlargement: true })
-            .webp({ quality: IMAGE_QUALITY })
-            .toBuffer();
+        // Compress image with error handling
+        let compressedBuffer;
+        try {
+            compressedBuffer = await sharp(req.file.buffer)
+                .resize(IMAGE_MAX_WIDTH, IMAGE_MAX_WIDTH, { fit: 'cover', withoutEnlargement: true })
+                .webp({ quality: IMAGE_QUALITY })
+                .toBuffer();
+        } catch (sharpError) {
+            console.error('Sharp processing error:', sharpError.message);
+            return res.status(400).json({
+                message: 'La imagen no es válida o está corrupta. Intenta con otro archivo.',
+                error: sharpError.message
+            });
+        }
 
         const objectName = `avatars/${userId}-${Date.now()}.webp`;
 
@@ -261,11 +270,9 @@ exports.uploadAvatar = async (req, res) => {
 
         // Build URL
         const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-        const publicEndpoint = (process.env.MINIO_PUBLIC_ENDPOINT || process.env.MINIO_ENDPOINT)
-            .replace('http://', '')
-            .replace('https://', '');
+        const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || 'localhost';
 
-        if (!publicEndpoint) throw new Error('MINIO_ENDPOINT not configured');
+        if (!publicEndpoint) throw new Error('MINIO_PUBLIC_ENDPOINT not configured');
 
         const port = process.env.MINIO_PORT;
         // If standard ports, don't show port in URL
@@ -472,5 +479,102 @@ exports.verifyEmailChange = async (req, res) => {
     } catch (err) {
         console.error('Verify email change error:', err);
         res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+/**
+ * Change Password (Authenticated)
+ * PUT /api/users/change-password
+ */
+exports.changePassword = async (req, res) => {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        // 1. Get user with current password hash
+        const userResult = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+        const user = userResult.rows[0];
+
+        // 2. Verify current password
+        const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!validPassword) {
+            return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+        }
+
+        // 3. Security Checks (Reuse, etc.) - Simplified for now, reusing logic from updateProfile if needed
+        // For now, just standard update
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(newPassword, salt);
+
+        // 4. Update Password
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+
+        // 5. Add to history
+        await pool.query(
+            'INSERT INTO password_history (user_id, password_hash) VALUES ($1, $2)',
+            [userId, newHash]
+        );
+
+        res.json({ message: 'Contraseña actualizada correctamente' });
+
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json({ message: 'Error al cambiar la contraseña' });
+    }
+};
+
+/**
+ * Delete Own Account (Authenticated)
+ * DELETE /api/users/me
+ */
+exports.deleteOwnAccount = async (req, res) => {
+    const userId = req.user.id;
+    const { password } = req.body;
+
+    try {
+        if (!password) {
+            return res.status(400).json({ message: 'Se requiere contraseña para confirmar eliminación.' });
+        }
+
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get User Hash
+            const userRes = await client.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+            if (userRes.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ message: 'Usuario no encontrado' });
+            }
+
+            // 2. Verify Password
+            const valid = await bcrypt.compare(password, userRes.rows[0].password_hash);
+            if (!valid) {
+                await client.query('ROLLBACK');
+                return res.status(401).json({ message: 'Contraseña incorrecta' });
+            }
+
+            // 3. Soft Delete
+            await client.query(
+                "UPDATE users SET status = 'deleted', active = false WHERE id = $1",
+                [userId]
+            );
+
+            await client.query('COMMIT');
+            res.json({ message: 'Cuenta eliminada correctamente.' });
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    } catch (err) {
+        console.error('Delete account error:', err);
+        res.status(500).json({ message: 'Error al eliminar la cuenta' });
     }
 };

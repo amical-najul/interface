@@ -4,10 +4,10 @@ const path = require('path');
 
 async function runMigration() {
     try {
-        const sqlPath = path.join(__dirname, 'src', 'db', 'tables', '08_avatar_history.sql');
+        const sqlPath = path.join(__dirname, 'src', 'db', 'tables', '09_user_status.sql');
         const sql = fs.readFileSync(sqlPath, 'utf8');
 
-        console.log('Aplicando migración 08_avatar_history.sql...');
+        console.log('Aplicando migración 09_user_status.sql...');
         await pool.query(sql);
         console.log('✅ Migración exitosa.');
         process.exit(0);

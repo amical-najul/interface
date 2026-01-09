@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import UserProfileMenu from '../components/layout/UserProfileMenu';
 
 const UserLayout = () => {
     const { user, logout } = useAuth();
@@ -15,13 +16,7 @@ const UserLayout = () => {
                             <span className="text-xl font-bold text-[#008a60]">Mi Aplicación</span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
-                            <button
-                                onClick={logout}
-                                className="text-sm text-gray-500 hover:text-red-600 font-medium transition-colors"
-                            >
-                                Cerrar Sesión
-                            </button>
+                            <UserProfileMenu user={user} logout={logout} />
                         </div>
                     </div>
                 </div>
