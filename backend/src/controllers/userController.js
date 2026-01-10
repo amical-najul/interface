@@ -152,6 +152,11 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
+        // Prevent admin from deleting themselves
+        if (req.user.id === parseInt(id)) {
+            return res.status(400).json({ message: 'No puedes eliminarte a ti mismo. Usa la opción de eliminar cuenta en tu perfil.' });
+        }
+
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
         res.json({ message: 'Usuario eliminado' });
     } catch (err) {
@@ -247,15 +252,23 @@ exports.uploadAvatar = async (req, res) => {
 
         // 1. Rate Limit Check (Max 2 changes in 24 hours) - SKIP FOR ADMIN
         if (req.user.role !== 'admin') {
-            const recentUploads = await client.query(
-                `SELECT COUNT(*) FROM avatar_history 
-                 WHERE user_id = $1 
-                 AND created_at > NOW() - INTERVAL '24 HOURS'`,
-                [userId]
+            // Check if rate limiting is enabled
+            const rateLimitSetting = await client.query(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'rate_limit_avatar_enabled'"
             );
+            const rateLimitEnabled = rateLimitSetting.rows.length === 0 || rateLimitSetting.rows[0].setting_value !== 'false';
 
-            if (parseInt(recentUploads.rows[0].count) >= 2) {
-                return res.status(429).json({ message: 'Límite de cambios de foto excedido (máx 2 en 24h).' });
+            if (rateLimitEnabled) {
+                const recentUploads = await client.query(
+                    `SELECT COUNT(*) FROM avatar_history 
+                     WHERE user_id = $1 
+                     AND created_at > NOW() - INTERVAL '24 HOURS'`,
+                    [userId]
+                );
+
+                if (parseInt(recentUploads.rows[0].count) >= 2) {
+                    return res.status(429).json({ message: 'Límite de cambios de foto excedido (máx 2 en 24h).' });
+                }
             }
         }
 
@@ -524,15 +537,50 @@ exports.changePassword = async (req, res) => {
             return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
         }
 
-        // 3. Security Checks (Reuse, etc.) - Simplified for now, reusing logic from updateProfile if needed
-        // For now, just standard update
+        // 3. Security Checks - SKIP FOR ADMIN
+        if (req.user.role !== 'admin') {
+            // Check if rate limiting is enabled
+            const rateLimitSetting = await pool.query(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'rate_limit_password_enabled'"
+            );
+            const rateLimitEnabled = rateLimitSetting.rows.length === 0 || rateLimitSetting.rows[0].setting_value !== 'false';
+
+            if (rateLimitEnabled) {
+                // 3a. Rate Limit Check (Max 3 changes in 24h)
+                const recentChanges = await pool.query(
+                    `SELECT COUNT(*) FROM password_history 
+                     WHERE user_id = $1 AND created_at > NOW() - INTERVAL '24 HOURS'`,
+                    [userId]
+                );
+
+                if (parseInt(recentChanges.rows[0].count) >= 3) {
+                    return res.status(429).json({ message: 'Límite de cambios de contraseña excedido (máx 3 en 24h).' });
+                }
+
+                // 3b. History Check (Last 5 passwords)
+                const history = await pool.query(
+                    `SELECT password_hash FROM password_history 
+                     WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5`,
+                    [userId]
+                );
+
+                for (const entry of history.rows) {
+                    const match = await bcrypt.compare(newPassword, entry.password_hash);
+                    if (match) {
+                        return res.status(400).json({ message: 'Por seguridad, no puedes reutilizar ninguna de tus últimas 5 contraseñas.' });
+                    }
+                }
+            }
+        }
+
+        // 4. Hash new password
         const salt = await bcrypt.genSalt(10);
         const newHash = await bcrypt.hash(newPassword, salt);
 
-        // 4. Update Password
+        // 5. Update Password
         await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
 
-        // 5. Add to history
+        // 6. Add to history
         await pool.query(
             'INSERT INTO password_history (user_id, password_hash) VALUES ($1, $2)',
             [userId, newHash]

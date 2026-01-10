@@ -13,12 +13,12 @@ const aiLimiter = async (req, res, next) => {
         // Si existe y es 'false', bloquear todo
         if (globalSetting.rows.length > 0 && globalSetting.rows[0].setting_value === 'false') {
             return res.status(503).json({
-                message: 'El servicio de Inteligencia Artificial estÃ¡ deshabilitado temporalmente.'
+                message: 'El servicio de Inteligencia Artificial esta deshabilitado temporalmente.'
             });
         }
 
-        // Si no hay usuario (endpoint público o error de auth previo), asumir 'guest'
-        // IMPORTANTE: Este middleware debe ir DESPUÃ‰S de authMiddleware si se quiere usar req.user
+        // Si no hay usuario (endpoint publico o error de auth previo), asumir 'guest'
+        // IMPORTANTE: Este middleware debe ir DESPUES de authMiddleware si se quiere usar req.user
         const userId = req.user ? req.user.id : null;
         const userRole = req.user ? req.user.role : 'guest';
 
@@ -39,7 +39,7 @@ const aiLimiter = async (req, res, next) => {
         const limits = limitsRes.rows[0];
 
         if (!limits.enabled) {
-            return res.status(403).json({ message: 'El uso de IA estÃ¡ deshabilitado para tu rol.' });
+            return res.status(403).json({ message: 'El uso de IA esta deshabilitado para tu rol.' });
         }
 
         // 3. Verificar Uso Diario
@@ -65,13 +65,13 @@ const aiLimiter = async (req, res, next) => {
 
             if (requestCount >= limits.daily_request_limit) {
                 return res.status(429).json({
-                    message: `Has alcanzado tu lÃ­mite diario de peticiones (${limits.daily_request_limit}).`
+                    message: `Has alcanzado tu limite diario de peticiones (${limits.daily_request_limit}).`
                 });
             }
 
             if (tokenSum >= limits.daily_token_limit) {
                 return res.status(429).json({
-                    message: `Has alcanzado tu lÃ­mite diario de tokens (${limits.daily_token_limit}).`
+                    message: `Has alcanzado tu limite diario de tokens (${limits.daily_token_limit}).`
                 });
             }
         }
@@ -95,7 +95,7 @@ const aiLimiter = async (req, res, next) => {
 
     } catch (err) {
         console.error('AI Limiter Error:', err);
-        res.status(500).json({ message: 'Error interno verificando lÃ­mites de IA.' });
+        res.status(500).json({ message: 'Error interno verificando limites de IA.' });
     }
 };
 

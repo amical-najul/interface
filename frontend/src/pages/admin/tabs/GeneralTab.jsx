@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { Layout } from 'lucide-react';
+import { Layout, Shield } from 'lucide-react';
 
 const GeneralTab = () => {
     const { token } = useAuth();
@@ -9,12 +9,15 @@ const GeneralTab = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Solo Branding
+    // Branding + Security Settings
     const [settings, setSettings] = useState({
         app_name: '',
         app_favicon_url: '',
         app_version: '',
-        footer_text: ''
+        footer_text: '',
+        rate_limit_avatar_enabled: true,
+        rate_limit_password_enabled: true,
+        rate_limit_login_enabled: true
     });
 
     const API_URL = import.meta.env.VITE_API_URL;
@@ -35,7 +38,10 @@ const GeneralTab = () => {
                     app_name: data.app_name || '',
                     app_favicon_url: data.app_favicon_url || '',
                     app_version: data.app_version || '',
-                    footer_text: data.footer_text || ''
+                    footer_text: data.footer_text || '',
+                    rate_limit_avatar_enabled: data.rate_limit_avatar_enabled !== false,
+                    rate_limit_password_enabled: data.rate_limit_password_enabled !== false,
+                    rate_limit_login_enabled: data.rate_limit_login_enabled !== false
                 });
             }
         } catch (err) {
@@ -55,7 +61,10 @@ const GeneralTab = () => {
             app_name: settings.app_name,
             app_favicon_url: settings.app_favicon_url,
             app_version: settings.app_version,
-            footer_text: settings.footer_text
+            footer_text: settings.footer_text,
+            rate_limit_avatar_enabled: settings.rate_limit_avatar_enabled,
+            rate_limit_password_enabled: settings.rate_limit_password_enabled,
+            rate_limit_login_enabled: settings.rate_limit_login_enabled
         };
 
         try {
@@ -196,6 +205,59 @@ const GeneralTab = () => {
                         rows="2"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     />
+                </div>
+
+                {/* Security Rate Limits Section */}
+                <div className="pt-6 border-t">
+                    <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-gray-600" />
+                        Limites de Seguridad
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-4">Estos limites aplican solo a usuarios, no a administradores.</p>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p className="font-medium text-gray-700">Limite de cambios de foto</p>
+                                <p className="text-xs text-gray-500">Max 2 cambios de avatar cada 24 horas</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSettings(prev => ({ ...prev, rate_limit_avatar_enabled: !prev.rate_limit_avatar_enabled }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_avatar_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_avatar_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p className="font-medium text-gray-700">Limite de cambios de contraseña</p>
+                                <p className="text-xs text-gray-500">Max 3 cambios cada 24 horas + no reutilizar ultimas 5</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSettings(prev => ({ ...prev, rate_limit_password_enabled: !prev.rate_limit_password_enabled }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_password_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_password_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p className="font-medium text-gray-700">Limite de intentos de login</p>
+                                <p className="text-xs text-gray-500">Bloqueo temporal tras intentos fallidos</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSettings(prev => ({ ...prev, rate_limit_login_enabled: !prev.rate_limit_login_enabled }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_login_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_login_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="pt-4 border-t">

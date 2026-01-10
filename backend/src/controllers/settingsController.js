@@ -7,7 +7,8 @@ exports.getSmtpSettings = async (req, res) => {
             'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
             'app_name', 'app_favicon_url', 'app_version', 'footer_text',
             'llm_provider', 'llm_model', 'llm_api_key',
-            'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary'
+            'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary',
+            'rate_limit_avatar_enabled', 'rate_limit_password_enabled', 'rate_limit_login_enabled'
         ];
         const result = await pool.query(
             'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
@@ -31,7 +32,10 @@ exports.getSmtpSettings = async (req, res) => {
             llm_api_key: '',
             llm_provider_secondary: '',
             llm_model_secondary: '',
-            llm_api_key_secondary: ''
+            llm_api_key_secondary: '',
+            rate_limit_avatar_enabled: true,
+            rate_limit_password_enabled: true,
+            rate_limit_login_enabled: true
         };
 
         result.rows.forEach(row => {
@@ -87,6 +91,15 @@ exports.getSmtpSettings = async (req, res) => {
                 case 'llm_api_key_secondary':
                     settings.llm_api_key_secondary = row.setting_value ? '••••••••' : '';
                     break;
+                case 'rate_limit_avatar_enabled':
+                    settings.rate_limit_avatar_enabled = row.setting_value !== 'false';
+                    break;
+                case 'rate_limit_password_enabled':
+                    settings.rate_limit_password_enabled = row.setting_value !== 'false';
+                    break;
+                case 'rate_limit_login_enabled':
+                    settings.rate_limit_login_enabled = row.setting_value !== 'false';
+                    break;
             }
         });
 
@@ -103,7 +116,8 @@ exports.updateSmtpSettings = async (req, res) => {
         enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
         app_name, app_favicon_url, app_version, footer_text,
         llm_provider, llm_model, llm_api_key,
-        llm_provider_secondary, llm_model_secondary, llm_api_key_secondary
+        llm_provider_secondary, llm_model_secondary, llm_api_key_secondary,
+        rate_limit_avatar_enabled, rate_limit_password_enabled, rate_limit_login_enabled
     } = req.body;
 
     try {
@@ -145,6 +159,11 @@ exports.updateSmtpSettings = async (req, res) => {
         if (llm_api_key_secondary && llm_api_key_secondary !== '••••••••') {
             await upsert('llm_api_key_secondary', llm_api_key_secondary);
         }
+
+        // Rate limit settings
+        if (rate_limit_avatar_enabled !== undefined) await upsert('rate_limit_avatar_enabled', String(rate_limit_avatar_enabled));
+        if (rate_limit_password_enabled !== undefined) await upsert('rate_limit_password_enabled', String(rate_limit_password_enabled));
+        if (rate_limit_login_enabled !== undefined) await upsert('rate_limit_login_enabled', String(rate_limit_login_enabled));
 
         res.json({ message: 'Configuración guardada' });
     } catch (err) {
@@ -253,10 +272,35 @@ exports.updateOAuthSettings = async (req, res) => {
 // Get public OAuth settings (no auth) - only client_id and enabled
 exports.getPublicOAuthSettings = async (req, res) => {
     try {
-        res.json({
-            enabled: process.env.VITE_GOOGLE_AUTH_ENABLED === 'true',
-            client_id: process.env.VITE_GOOGLE_CLIENT_ID
+        const keys = ['google_oauth_enabled', 'google_client_id'];
+        const result = await pool.query(
+            'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
+            [keys]
+        );
+
+        const settings = {
+            enabled: false,
+            client_id: ''
+        };
+
+        result.rows.forEach(row => {
+            switch (row.setting_key) {
+                case 'google_oauth_enabled':
+                    settings.enabled = row.setting_value === 'true';
+                    break;
+                case 'google_client_id':
+                    settings.client_id = row.setting_value || '';
+                    break;
+            }
         });
+
+        // Fallback to env vars if not in DB
+        if (!settings.client_id && process.env.VITE_GOOGLE_CLIENT_ID) {
+            settings.client_id = process.env.VITE_GOOGLE_CLIENT_ID;
+            settings.enabled = process.env.VITE_GOOGLE_AUTH_ENABLED === 'true';
+        }
+
+        res.json(settings);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener configuración OAuth pública' });

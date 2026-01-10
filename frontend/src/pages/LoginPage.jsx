@@ -36,10 +36,10 @@ function LoginPage() {
     // State
     const [showVerification, setShowVerification] = useState(false);
 
-    // Check for Verification Token in URL
+    // Check for Verification Token in URL (supports both ?token= and ?verify=)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
+        const token = params.get('token') || params.get('verify');
         if (token) {
             verifyEmail(token);
         }
@@ -83,7 +83,7 @@ function LoginPage() {
     const handleGoogleSuccess = async (tokenResponse) => {
         setIsLoading(true);
         try {
-            const data = await authService.googleLogin(tokenResponse.access_token);
+            const data = await authService.googleLogin(tokenResponse.credential);
 
             // Save session via AuthContext
             login(data.user, data.token);
