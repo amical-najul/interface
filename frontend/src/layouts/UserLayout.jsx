@@ -1,21 +1,24 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import UserProfileMenu from '../components/layout/UserProfileMenu';
 
 const UserLayout = () => {
     const { user, logout } = useAuth();
+    const { appName, appFaviconUrl } = useBranding();
     const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="min-h-screen bg-gray-50 font-inter">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-inter">
             {/* Navbar */}
             <nav className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <span className="text-xl font-bold text-[#008a60]">Mi Aplicación</span>
+                        <div className="flex items-center gap-3">
+                            <img src={appFaviconUrl} alt="Logo" className="w-8 h-8 rounded-full" />
+                            <span className="text-xl font-bold text-[#008a60]">{appName}</span>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center">
                             <UserProfileMenu user={user} logout={logout} />
                         </div>
                     </div>
@@ -23,7 +26,7 @@ const UserLayout = () => {
             </nav>
 
             {/* Content */}
-            <main>
+            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Outlet />
             </main>
 

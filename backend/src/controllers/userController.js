@@ -10,75 +10,67 @@ const IMAGE_QUALITY = 80;
 // Admin: Get all users with Pagination & Filtering
 exports.getAllUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search = '', role, active } = req.query;
-
+        const { page = 1, limit = 10, search = '', role, status } = req.query;
         const offset = (page - 1) * limit;
-        const params = [];
-        let paramIdx = 1;
 
-        // Build base query
-        let query = 'SELECT id, email, role, is_verified, active, name, avatar_url, created_at FROM users WHERE 1=1';
+        let query = 'SELECT id, email, name, role, is_verified, active, status, created_at, avatar_url FROM users WHERE 1=1';
         let countQuery = 'SELECT COUNT(*) FROM users WHERE 1=1';
+        const params = [];
+        let paramIndex = 1;
 
-        // Add Search Filter
+        // Search Filter
         if (search) {
-            const searchClause = ` AND (name ILIKE $${paramIdx} OR email ILIKE $${paramIdx})`;
-            query += searchClause;
-            countQuery += searchClause;
+            query += ` AND (email ILIKE $${paramIndex} OR name ILIKE $${paramIndex})`;
+            countQuery += ` AND (email ILIKE $${paramIndex} OR name ILIKE $${paramIndex})`;
             params.push(`%${search}%`);
-            paramIdx++;
+            paramIndex++;
         }
 
-        // Add Role Filter
+        // Role Filter
         if (role && role !== 'all') {
-            const roleClause = ` AND role = $${paramIdx}`;
-            query += roleClause;
-            countQuery += roleClause;
+            query += ` AND role = $${paramIndex}`;
+            countQuery += ` AND role = $${paramIndex}`;
             params.push(role);
-            paramIdx++;
+            paramIndex++;
         }
 
-        // Add Active Filter
-        if (active && active !== 'all') {
-            const activeClause = ` AND active = $${paramIdx}`;
-            query += activeClause;
-            countQuery += activeClause;
-            params.push(active === 'true');
-            paramIdx++;
+        // Status Filter
+        if (status && status !== 'all') {
+            // Map frontend 'active'/'inactive' to boolean active, or 'deleted' to status column
+            if (status === 'deleted') {
+                query += ` AND status = $${paramIndex}`;
+                countQuery += ` AND status = $${paramIndex}`;
+                params.push('deleted');
+            } else {
+                // Active/Inactive
+                const isActive = status === 'active';
+                query += ` AND active = $${paramIndex} AND status != 'deleted'`; // Exclude deleted when filtering by active state
+                countQuery += ` AND active = $${paramIndex} AND status != 'deleted'`;
+                params.push(isActive);
+            }
+            paramIndex++;
         }
+
+        // Execute Count
+        const totalResult = await pool.query(countQuery, params);
+        const total = parseInt(totalResult.rows[0].count);
 
         // Add Pagination
-        query += ` ORDER BY id ASC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
-
-        // Execute queries
-        const totalResult = await pool.query(countQuery, params); // Params for count are subset, but PG ignores extra params if strictly positional? No, wait. 
-        // FIX: The params array works for both if the index matches, but limit/offset are extra. 
-        // Correction: Need separate params array or slice for count query? 
-        // PG driver doesn't support named parameters easily. 
-        // Simplest strategy: Execute Count Query FIRST with its own params.
-
-        const countParams = [...params]; // Copy params before adding limit/offset
-        const totalRows = await pool.query(countQuery, countParams);
-        const total = parseInt(totalRows.rows[0].count);
-
-        params.push(limit);
-        params.push(offset);
+        query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        params.push(limit, offset);
 
         const result = await pool.query(query, params);
 
         res.json({
-            data: result.rows,
-            meta: {
-                total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(total / limit)
-            }
+            users: result.rows,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / limit)
         });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error al obtener usuarios' });
+        res.status(500).json({ message: 'Error obteniendo usuarios' });
     }
 };
 
@@ -86,9 +78,9 @@ exports.getAllUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
     const { email, password, role, name } = req.body;
     try {
-        // Check existence
-        const check = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (check.rows.length > 0) return res.status(400).json({ message: 'El usuario ya existe' });
+        // Check if exists
+        const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) return res.status(400).json({ message: 'El usuario ya existe' });
 
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
         const salt = await bcrypt.genSalt(saltRounds);
@@ -109,13 +101,30 @@ exports.createUser = async (req, res) => {
 // Admin: Update User
 exports.updateUser = async (req, res) => {
     const { id } = req.params;
-    const { email, role, active, password, name } = req.body;
+    const { email, role, active, password, name, status } = req.body;
 
     try {
+        let finalStatus = status;
+        let finalActive = active;
+
+        // Sync status/active
+        if (status) {
+            finalActive = (status === 'active');
+        } else if (active !== undefined) {
+            finalStatus = active ? 'active' : 'inactive';
+            finalActive = active;
+        }
+
         // Build query dynamically
         let query = "UPDATE users SET email=$1, role=$2, active=$3, name=$4";
-        let params = [email, role, active, name];
+        let params = [email, role, finalActive, name];
         let idx = 5;
+
+        if (finalStatus) {
+            query += `, status=$${idx}`;
+            params.push(finalStatus);
+            idx++;
+        }
 
         // If password provided, hash and update
         if (password && password.trim() !== "") {
@@ -126,13 +135,13 @@ exports.updateUser = async (req, res) => {
             idx++;
         }
 
-        query += ` WHERE id=$${idx} RETURNING id, email, role, active, name`;
+        query += ` WHERE id=$${idx} RETURNING id, email, role, active, name, status`;
         params.push(id);
 
         const result = await pool.query(query, params);
         if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-        res.json(result.rows[0]);
+        res.json({ user: result.rows[0] });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error actualizando usuario' });
@@ -221,9 +230,15 @@ exports.updateProfile = async (req, res) => {
 
 // Avatar Upload with Image Compression (MinIO Implementation)
 exports.uploadAvatar = async (req, res) => {
-    if (!req.file) return res.status(400).json({ message: 'No se subió imagen' });
+    console.log('DEBUG: uploadAvatar called');
+    if (!req.file) {
+        console.log('DEBUG: No file uploaded');
+        return res.status(400).json({ message: 'No se subió imagen' });
+    }
+    console.log('DEBUG: File received:', req.file.originalname, req.file.size);
 
     const client = await pool.connect();
+    console.log('DEBUG: DB connected');
 
     try {
         const userId = req.user.id;
@@ -262,11 +277,17 @@ exports.uploadAvatar = async (req, res) => {
         const objectName = `avatars/${userId}-${Date.now()}.webp`;
 
         // Ensure bucket exists
+        console.log('DEBUG: Checking bucket existence:', bucketName);
         const exists = await minioClient.bucketExists(bucketName);
-        if (!exists) await minioClient.makeBucket(bucketName, 'us-east-1');
+        if (!exists) {
+            console.log('DEBUG: Creating bucket:', bucketName);
+            await minioClient.makeBucket(bucketName, 'us-east-1');
+        }
 
         // Upload to MinIO
+        console.log('DEBUG: Uploading to MinIO:', objectName);
         await minioClient.putObject(bucketName, objectName, compressedBuffer, { 'Content-Type': 'image/webp' });
+        console.log('DEBUG: Upload success');
 
         // Build URL
         const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';

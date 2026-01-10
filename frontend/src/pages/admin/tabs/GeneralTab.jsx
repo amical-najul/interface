@@ -12,7 +12,9 @@ const GeneralTab = () => {
     // Solo Branding
     const [settings, setSettings] = useState({
         app_name: '',
-        app_favicon_url: ''
+        app_favicon_url: '',
+        app_version: '',
+        footer_text: ''
     });
 
     const API_URL = import.meta.env.VITE_API_URL;
@@ -23,13 +25,7 @@ const GeneralTab = () => {
 
     const fetchSettings = async () => {
         try {
-            // Usamos endpoint legacy o public? settings/smtp trae app_settings
-            const res = await fetch(`${API_URL}/settings/public`, {
-                headers: { 'x-auth-token': token }
-            });
-            // Actually, public endpoint returns simple json used for initial load. 
-            // Better use authenticated endpoint to get latest consistent data if changed
-            const resAuth = await fetch(`${API_URL}/settings/smtp`, { // Legacy endpoint gets everything
+            const resAuth = await fetch(`${API_URL}/settings/smtp`, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -37,7 +33,9 @@ const GeneralTab = () => {
                 const data = await resAuth.json();
                 setSettings({
                     app_name: data.app_name || '',
-                    app_favicon_url: data.app_favicon_url || ''
+                    app_favicon_url: data.app_favicon_url || '',
+                    app_version: data.app_version || '',
+                    footer_text: data.footer_text || ''
                 });
             }
         } catch (err) {
@@ -55,7 +53,9 @@ const GeneralTab = () => {
 
         const payload = {
             app_name: settings.app_name,
-            app_favicon_url: settings.app_favicon_url
+            app_favicon_url: settings.app_favicon_url,
+            app_version: settings.app_version,
+            footer_text: settings.footer_text
         };
 
         try {
@@ -172,6 +172,30 @@ const GeneralTab = () => {
                             <p className="text-xs text-gray-500">Recomendado: 64x64px PNG o ICO.</p>
                         </div>
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Versión de la App</label>
+                        <input
+                            type="text"
+                            value={settings.app_version}
+                            onChange={(e) => setSettings({ ...settings, app_version: e.target.value })}
+                            placeholder="1.0.0"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Texto del Pie de Página (Footer)</label>
+                    <textarea
+                        value={settings.footer_text}
+                        onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
+                        placeholder="© 2024 Mi Aplicación. Todos los derechos reservados."
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    />
                 </div>
 
                 <div className="pt-4 border-t">

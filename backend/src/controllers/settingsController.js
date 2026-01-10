@@ -5,7 +5,7 @@ exports.getSmtpSettings = async (req, res) => {
     try {
         const keys = [
             'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
-            'app_name', 'app_favicon_url',
+            'app_name', 'app_favicon_url', 'app_version', 'footer_text',
             'llm_provider', 'llm_model', 'llm_api_key',
             'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary'
         ];
@@ -24,6 +24,8 @@ exports.getSmtpSettings = async (req, res) => {
             smtp_secure: 'tls',
             app_name: process.env.VITE_APP_NAME,
             app_favicon_url: process.env.VITE_APP_FAVICON_URL,
+            app_version: '1.0.0',
+            footer_text: '© 2024 Mi Aplicación. Todos los derechos reservados.',
             llm_provider: 'openai',
             llm_model: '',
             llm_api_key: '',
@@ -61,6 +63,12 @@ exports.getSmtpSettings = async (req, res) => {
                 case 'app_favicon_url':
                     settings.app_favicon_url = row.setting_value;
                     break;
+                case 'app_version':
+                    settings.app_version = row.setting_value;
+                    break;
+                case 'footer_text':
+                    settings.footer_text = row.setting_value;
+                    break;
                 case 'llm_provider':
                     settings.llm_provider = row.setting_value;
                     break;
@@ -93,7 +101,7 @@ exports.getSmtpSettings = async (req, res) => {
 exports.updateSmtpSettings = async (req, res) => {
     const {
         enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
-        app_name, app_favicon_url,
+        app_name, app_favicon_url, app_version, footer_text,
         llm_provider, llm_model, llm_api_key,
         llm_provider_secondary, llm_model_secondary, llm_api_key_secondary
     } = req.body;
@@ -123,6 +131,8 @@ exports.updateSmtpSettings = async (req, res) => {
         if (smtp_secure !== undefined) await upsert('smtp_secure', smtp_secure);
         if (app_name !== undefined) await upsert('app_name', app_name);
         if (app_favicon_url !== undefined) await upsert('app_favicon_url', app_favicon_url);
+        if (app_version !== undefined) await upsert('app_version', app_version);
+        if (footer_text !== undefined) await upsert('footer_text', footer_text);
 
         if (llm_provider !== undefined) await upsert('llm_provider', llm_provider);
         if (llm_model !== undefined) await upsert('llm_model', llm_model);
@@ -146,17 +156,27 @@ exports.updateSmtpSettings = async (req, res) => {
 // Get public settings (no auth required) - only branding info
 exports.getPublicSettings = async (req, res) => {
     try {
-        const keys = ['app_name', 'app_favicon_url'];
+        const keys = ['app_name', 'app_favicon_url', 'app_version', 'footer_text'];
         const result = await pool.query(
             'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
             [keys]
         );
 
-        // Return public settings for frontend branding
-        res.json({
-            app_name: process.env.VITE_APP_NAME,
-            app_favicon_url: process.env.VITE_APP_FAVICON_URL
+        const settings = {
+            app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
+            app_favicon_url: process.env.VITE_APP_FAVICON_URL || '/favicon.ico',
+            app_version: '1.0.0',
+            footer_text: '© 2024 Mi Aplicación. Todos los derechos reservados.'
+        };
+
+        result.rows.forEach(row => {
+            if (row.setting_key === 'app_name') settings.app_name = row.setting_value;
+            if (row.setting_key === 'app_favicon_url') settings.app_favicon_url = row.setting_value;
+            if (row.setting_key === 'app_version') settings.app_version = row.setting_value;
+            if (row.setting_key === 'footer_text') settings.footer_text = row.setting_value;
         });
+
+        res.json(settings);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener configuración pública' });

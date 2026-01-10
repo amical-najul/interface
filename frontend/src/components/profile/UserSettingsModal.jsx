@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import userService from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
+import { useBranding } from '../../context/BrandingContext';
 import DeleteAccountModal from './DeleteAccountModal';
 
 const UserSettingsModal = ({ isOpen, onClose }) => {
-    const { user } = useAuth();
+    const { user, updateProfile } = useAuth();
+    const { appName, appVersion, footerText, appFaviconUrl } = useBranding();
 
     const [activeTab, setActiveTab] = useState('profile');
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // ... (keep state) ...
 
     // Profile State
     const [profileData, setProfileData] = useState({
@@ -17,14 +21,12 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         email: user?.email || '',
     });
 
-    // Password State
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
-    // Theme State (Mock)
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
     useEffect(() => {
@@ -43,18 +45,20 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         setIsLoading(true);
         setMessage({ type: '', text: '' });
         try {
-            await userService.updateProfile({
+            const updatedUser = await userService.updateProfile({
                 name: profileData.name,
                 email: profileData.email
             });
-            localStorage.setItem('user', JSON.stringify({ ...user, name: profileData.name })); // Optimistic sync
-            window.location.reload();
+            updateProfile({ ...user, name: profileData.name });
+            setMessage({ type: 'success', text: 'Perfil actualizado' });
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Error al actualizar perfil' });
         } finally {
             setIsLoading(false);
         }
     };
+
+    // ... (keep password & delete handlers) ...
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
@@ -78,33 +82,11 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleDeleteAccountClick = () => {
-        setIsDeleteModalOpen(true);
-    };
+    const handleDeleteAccountClick = () => setIsDeleteModalOpen(true);
 
     const handleConfirmDeleteAccount = async (password) => {
         try {
-            // Note: backend currently doesn't require password for delete (based on token).
-            // But good practice to verify it on frontend or update backend to check it.
-            // Assuming for now backend relies on token, but we could add password verification endpoint or param.
-            // For now, let's just proceed. If backend required password, we'd pass it.
-            // Actually, user wants "confirmation de contrasena para eliminar". 
-            // We should ideally verify password *before* calling delete. 
-            // Or assume userController.deleteOwnAccount checks it if we send it?
-            // The current backend implementation of deleteOwnAccount DOES NOT take a password.
-            // However, we can use `changePassword` logic (verify pass) before deleting?
-            // Or just trust the frontend check if we had an endpoint for "verify-password"?
-            // Simplest path: Authenticate again (or check pass) then delete.
-            // BUT, since we don't have a specific verify-password endpoint, we will assume the intention is UX confirmation.
-            // To make it REAL, we would need to update backend deleteOwnAccount to accept password.
-            // Let's stick to UX + simple Token auth for now to fit the task scope, or update backend?
-            // User asked: "requeire confirmacion de contranea para eliminar".
-            // I'll update userService.deleteOwnAccount to send password, and Backend needs to check it.
-            // Wait, I can't update Backend in THIS tool call (it's multi-step).
-            // So for now, I'll send it, and if backend ignores it, it works. If backend updates later, it works.
-
-            await userService.deleteOwnAccount(password); // Pass password directly
-
+            await userService.deleteOwnAccount(password);
             window.location.href = '/login';
         } catch (error) {
             throw new Error(error.response?.data?.message || 'Error al eliminar cuenta');
@@ -118,10 +100,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
     };
 
     const fileInputRef = React.useRef(null);
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
-    };
+    const handleAvatarClick = () => fileInputRef.current?.click();
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
@@ -144,13 +123,12 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         setMessage({ type: '', text: '' });
 
         try {
-            await userService.uploadAvatar(formData);
+            const res = await userService.uploadAvatar(formData);
+            updateProfile({ ...user, avatar_url: res.avatar_url });
             setMessage({ type: 'success', text: 'Foto actualizada correctamente' });
-            setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
-            // Enhanced error logging to console for debugging
             console.error("Avatar upload failed:", error);
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Error al subir la imagen' });
+            setMessage({ type: 'error', text: error.data?.message || error.message || 'Error al subir la imagen' });
         } finally {
             setIsLoading(false);
         }
@@ -165,10 +143,10 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
         try {
             await userService.deleteAvatar();
+            updateProfile({ ...user, avatar_url: null });
             setMessage({ type: 'success', text: 'Foto eliminada correctamente' });
-            setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Error al eliminar la imagen' });
+            setMessage({ type: 'error', text: error.data?.message || error.message || 'Error al eliminar la imagen' });
         } finally {
             setIsLoading(false);
         }
@@ -177,11 +155,14 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
+        // ... (keep structure wrapper) ... 
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
                 <div className="bg-white w-full h-full sm:w-[420px] sm:h-[80vh] sm:max-h-[800px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-in-out">
 
-                    {/* Header */}
+                    {/* Header & Tabs (Keep them as is in logic, assumed unchanged in replacement range unless included) */}
+                    {/* ... Since I'm viewing lines 159-417, I'm replacing handleAvatarDelete and the JSX return logic ... */}
+
                     <div className="bg-gray-50 border-b border-gray-100 p-6 flex justify-between items-center shrink-0">
                         <h2 className="text-xl font-bold text-gray-800">Configuración de Cuenta</h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -193,30 +174,20 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
                     {/* Tabs */}
                     <div className="flex border-b border-gray-100 px-6 shrink-0 overflow-x-auto scrollbar-hide">
-                        <button
-                            onClick={() => setActiveTab('profile')}
-                            className={`py-4 px-4 font-medium text-sm transition-colors whitespace-nowrap border-b-2 ${activeTab === 'profile' ? 'border-[#008a60] text-[#008a60]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Perfil
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('security')}
-                            className={`py-4 px-4 font-medium text-sm transition-colors whitespace-nowrap border-b-2 ${activeTab === 'security' ? 'border-[#008a60] text-[#008a60]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Seguridad
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('preferences')}
-                            className={`py-4 px-4 font-medium text-sm transition-colors whitespace-nowrap border-b-2 ${activeTab === 'preferences' ? 'border-[#008a60] text-[#008a60]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Preferencias
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('info')}
-                            className={`py-4 px-4 font-medium text-sm transition-colors whitespace-nowrap border-b-2 ${activeTab === 'info' ? 'border-[#008a60] text-[#008a60]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Información
-                        </button>
+                        {['profile', 'security', 'preferences', 'info'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`py-4 px-4 font-medium text-sm transition-colors whitespace-nowrap border-b-2 capitalize ${activeTab === tab
+                                    ? 'border-[#008a60] text-[#008a60]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                            >
+                                {tab === 'profile' && 'Perfil'}
+                                {tab === 'security' && 'Seguridad'}
+                                {tab === 'preferences' && 'Preferencias'}
+                                {tab === 'info' && 'Información'}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Content */}
@@ -243,7 +214,6 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                                 </div>
                                             )}
 
-                                            {/* Overlay Icon on Hover */}
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <svg className="w-8 h-8 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -252,7 +222,6 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                             </div>
                                         </div>
 
-                                        {/* Delete Button (Only if avatar exists) */}
                                         {user?.avatar_url && (
                                             <button
                                                 type="button"
@@ -400,11 +369,15 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
                         {activeTab === 'info' && (
                             <div className="space-y-6 text-center py-8">
-                                <div className="w-16 h-16 bg-gray-100 rounded-2xl mx-auto flex items-center justify-center mb-4 text-4xl">
-                                    🚀
+                                <div className="w-16 h-16 bg-gray-100 rounded-2xl mx-auto flex items-center justify-center mb-4 overflow-hidden">
+                                    {appFaviconUrl ? (
+                                        <img src={appFaviconUrl} alt="App Logo" className="w-full h-full object-contain p-2" />
+                                    ) : (
+                                        <span className="text-4xl">🚀</span>
+                                    )}
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900">Mi Aplicación</h3>
-                                <p className="text-gray-500">Versión 1.0.0 (Beta)</p>
+                                <h3 className="text-xl font-bold text-gray-900">{appName || 'Mi Aplicación'}</h3>
+                                <p className="text-gray-500">Versión {appVersion || '1.0.0'}</p>
 
                                 <div className="flex justify-center gap-4 mt-8">
                                     <button className="text-[#008a60] hover:underline text-sm">Términos y Condiciones</button>
@@ -413,7 +386,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                 </div>
 
                                 <div className="mt-12 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm inline-block">
-                                    © 2026 Antigravity Corp. Todos los derechos reservados.
+                                    {footerText || '© 2024 Mi Aplicación. Todos los derechos reservados.'}
                                 </div>
                             </div>
                         )}

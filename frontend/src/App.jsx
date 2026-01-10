@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleConfigContext } from './context/GoogleConfigContext';
+import { BrandingProvider } from './context/BrandingContext';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -17,40 +18,11 @@ import PrivateRoute from './components/PrivateRoute';
 import UserLayout from './layouts/UserLayout';
 import UserDashboardPage from './pages/user/UserDashboardPage';
 
+
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Branding Manager to handle dynamic title and favicon
-const BrandingManager = ({ children }) => {
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        const res = await fetch(`${API_URL}/settings/public`);
-        if (res.ok) {
-          const settings = await res.json();
-          if (settings.app_name) {
-            document.title = settings.app_name;
-          }
-          if (settings.app_favicon_url) {
-            let link = document.querySelector("link[rel~='icon']");
-            if (!link) {
-              link = document.createElement('link');
-              link.rel = 'icon';
-              document.getElementsByTagName('head')[0].appendChild(link);
-            }
-            link.href = settings.app_favicon_url;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load branding:', err);
-      }
-    };
-    fetchBranding();
-  }, []);
 
-  return children;
-};
-
-// Wrapper for Google Auth - loads client ID dynamically
+// AuthWrapper (Keep existing)
 const AuthWrapper = ({ children }) => {
   const [clientId, setClientId] = useState(import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
   const [oauthEnabled, setOauthEnabled] = useState(false);
@@ -71,7 +43,6 @@ const AuthWrapper = ({ children }) => {
     fetchOAuthConfig();
   }, []);
 
-  // If OAuth is disabled or no client ID, render children without Google provider
   const isEnabled = oauthEnabled && !!clientId;
 
   const content = isEnabled ? (
@@ -93,7 +64,7 @@ function App() {
   return (
     <AuthWrapper>
       <AuthProvider>
-        <BrandingManager>
+        <BrandingProvider>
           <BrowserRouter>
             <Routes>
               {/* Public Routes */}
@@ -128,7 +99,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
-        </BrandingManager>
+        </BrandingProvider>
       </AuthProvider>
     </AuthWrapper>
   );

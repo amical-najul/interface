@@ -146,10 +146,18 @@ exports.googleLogin = async (req, res) => {
 
             // Asumiendo que la columna 'role' ya existe por migracion anterior
             const newUser = await pool.query(
-                "INSERT INTO users (email, password_hash, is_verified, role) VALUES ($1, $2, $3, 'user') RETURNING *",
+                "INSERT INTO users (email, password_hash, is_verified, role, status, active) VALUES ($1, $2, $3, 'user', 'active', true) RETURNING *",
                 [email, hash, true]
             );
             user = newUser.rows[0];
+        }
+
+        // Check Status
+        if (user.status === 'deleted') {
+            return res.status(403).json({ message: 'Esta cuenta ha sido eliminada.' });
+        }
+        if (!user.active || user.status === 'inactive') {
+            return res.status(403).json({ message: 'Tu cuenta está suspendida.' });
         }
 
         // Generar JWT

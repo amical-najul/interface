@@ -38,12 +38,12 @@ exports.updateJwtSecret = async (req, res) => {
 
     try {
         // Verificar contraseña del admin
-        const userRes = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+        const userRes = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
         if (userRes.rows.length === 0) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
-        const validPassword = await bcrypt.compare(adminPassword, userRes.rows[0].password);
+        const validPassword = await bcrypt.compare(adminPassword, userRes.rows[0].password_hash);
         if (!validPassword) {
             return res.status(403).json({ message: 'Contraseña incorrecta. No se autoriza el cambio.' });
         }

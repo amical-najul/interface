@@ -25,7 +25,7 @@ const AdminUsersPage = () => {
     const [page, setPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [activeFilter, setActiveFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const debouncedSearch = useDebounce(searchTerm, 500);
 
     // UX State
@@ -47,7 +47,7 @@ const AdminUsersPage = () => {
                 limit: 10,
                 search: debouncedSearch,
                 role: roleFilter,
-                active: activeFilter
+                status: statusFilter
             });
 
             const res = await fetch(`${API_URL}/users?${query}`, {
@@ -62,8 +62,12 @@ const AdminUsersPage = () => {
                     setUsers(payload); // Fallback for transition
                     setMeta({ page: 1, totalPages: 1, total: payload.length });
                 } else {
-                    setUsers(payload.data);
-                    setMeta(payload.meta);
+                    setUsers(payload.users || payload.data);
+                    setMeta({
+                        page: payload.currentPage || payload.meta?.page,
+                        totalPages: payload.totalPages || payload.meta?.totalPages,
+                        total: payload.meta?.total || 100 // Fallback
+                    });
                 }
             } else {
                 setError(payload.message || 'Error cargando usuarios');
@@ -73,7 +77,7 @@ const AdminUsersPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [token, page, debouncedSearch, roleFilter, activeFilter, API_URL]);
+    }, [token, page, debouncedSearch, roleFilter, statusFilter, API_URL]);
 
     useEffect(() => {
         fetchUsers();
@@ -94,7 +98,7 @@ const AdminUsersPage = () => {
         if (!userToDelete) return;
         try {
             const res = await fetch(`${API_URL}/users/${userToDelete.id}`, {
-                method: 'DELETE',
+                method: 'DELETE', // Soft delete by default now
                 headers: { 'x-auth-token': token }
             });
             if (res.ok) {
@@ -115,7 +119,7 @@ const AdminUsersPage = () => {
 
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-        data.active = data.active === 'on';
+        // Remove 'active' boolean logic, rely on 'status'
 
         const method = editingUser ? 'PUT' : 'POST';
         const url = editingUser ? `${API_URL}/users/${editingUser.id}` : `${API_URL}/users`;
@@ -151,6 +155,24 @@ const AdminUsersPage = () => {
         setEditingUser(user);
         setSaveStatus('idle');
         setModalOpen(true);
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'active': return 'bg-green-100 text-green-700';
+            case 'inactive': return 'bg-red-100 text-red-700';
+            case 'deleted': return 'bg-gray-100 text-gray-500 line-through';
+            default: return 'bg-gray-100 text-gray-600';
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'active': return 'Activo';
+            case 'inactive': return 'Inactivo';
+            case 'deleted': return 'Eliminado';
+            default: return status || 'Desconocido';
+        }
     };
 
     return (
@@ -193,13 +215,14 @@ const AdminUsersPage = () => {
                         <option value="user">Usuario</option>
                     </select>
                     <select
-                        value={activeFilter}
-                        onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}
+                        value={statusFilter}
+                        onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 focus:ring-2 focus:ring-[#008a60] focus:border-transparent outline-none cursor-pointer"
                     >
                         <option value="all">Estado: Todos</option>
-                        <option value="true">Activo</option>
-                        <option value="false">Inactivo</option>
+                        <option value="active">Activos</option>
+                        <option value="inactive">Inactivos</option>
+                        <option value="deleted">Eliminados</option>
                     </select>
                 </div>
             </div>
@@ -245,9 +268,9 @@ const AdminUsersPage = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                <span className={`w-2 h-2 rounded-full ${user.active ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                                {user.active ? 'Activo' : 'Inactivo'}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(user.status || (user.active ? 'active' : 'inactive'))}`}>
+                                                <span className={`w-2 h-2 rounded-full ${user.status === 'active' || user.active ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                                {getStatusLabel(user.status || (user.active ? 'active' : 'inactive'))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -338,14 +361,14 @@ const AdminUsersPage = () => {
                                         <option value="admin">Administrador</option>
                                     </select>
                                 </div>
-                                {editingUser && (
-                                    <div className="flex items-center pt-6">
-                                        <label className="flex items-center space-x-2 cursor-pointer select-none">
-                                            <input name="active" type="checkbox" defaultChecked={editingUser.active} className="text-[#008a60] focus:ring-[#008a60] rounded w-4 h-4 cursor-pointer" />
-                                            <span className="text-sm text-gray-700">Activo</span>
-                                        </label>
-                                    </div>
-                                )}
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700">Estado</label>
+                                    <select name="status" defaultValue={editingUser?.status || (editingUser?.active ? 'active' : 'inactive')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60]">
+                                        <option value="active">Activo</option>
+                                        <option value="inactive">Inactivo</option>
+                                        <option value="deleted">Eliminado</option>
+                                    </select>
+                                </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
                                 <button
