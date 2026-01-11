@@ -5,10 +5,11 @@ exports.getSmtpSettings = async (req, res) => {
     try {
         const keys = [
             'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
-            'app_name', 'app_favicon_url', 'app_version', 'footer_text',
+            'app_name', 'company_name', 'app_favicon_url', 'app_version', 'footer_text',
             'llm_provider', 'llm_model', 'llm_api_key',
             'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary',
-            'rate_limit_avatar_enabled', 'rate_limit_password_enabled', 'rate_limit_login_enabled'
+            'rate_limit_avatar_enabled', 'rate_limit_password_enabled', 'rate_limit_login_enabled',
+            'terms_conditions', 'privacy_policy'
         ];
         const result = await pool.query(
             'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
@@ -24,6 +25,7 @@ exports.getSmtpSettings = async (req, res) => {
             smtp_pass: '',
             smtp_secure: 'tls',
             app_name: process.env.VITE_APP_NAME,
+            company_name: '',
             app_favicon_url: process.env.VITE_APP_FAVICON_URL,
             app_version: '1.0.0',
             footer_text: '© 2024 Mi Aplicación. Todos los derechos reservados.',
@@ -35,7 +37,11 @@ exports.getSmtpSettings = async (req, res) => {
             llm_api_key_secondary: '',
             rate_limit_avatar_enabled: true,
             rate_limit_password_enabled: true,
-            rate_limit_login_enabled: true
+            rate_limit_avatar_enabled: true,
+            rate_limit_password_enabled: true,
+            rate_limit_login_enabled: true,
+            terms_content: '',
+            privacy_content: ''
         };
 
         result.rows.forEach(row => {
@@ -63,6 +69,9 @@ exports.getSmtpSettings = async (req, res) => {
                     break;
                 case 'app_name':
                     settings.app_name = row.setting_value;
+                    break;
+                case 'company_name':
+                    settings.company_name = row.setting_value;
                     break;
                 case 'app_favicon_url':
                     settings.app_favicon_url = row.setting_value;
@@ -100,6 +109,12 @@ exports.getSmtpSettings = async (req, res) => {
                 case 'rate_limit_login_enabled':
                     settings.rate_limit_login_enabled = row.setting_value !== 'false';
                     break;
+                case 'terms_conditions':
+                    settings.terms_content = row.setting_value;
+                    break;
+                case 'privacy_policy':
+                    settings.privacy_content = row.setting_value;
+                    break;
             }
         });
 
@@ -114,7 +129,8 @@ exports.getSmtpSettings = async (req, res) => {
 exports.updateSmtpSettings = async (req, res) => {
     const {
         enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
-        app_name, app_favicon_url, app_version, footer_text,
+        app_name, company_name, app_favicon_url, app_version, footer_text,
+        terms_content, privacy_content,
         llm_provider, llm_model, llm_api_key,
         llm_provider_secondary, llm_model_secondary, llm_api_key_secondary,
         rate_limit_avatar_enabled, rate_limit_password_enabled, rate_limit_login_enabled
@@ -144,9 +160,12 @@ exports.updateSmtpSettings = async (req, res) => {
 
         if (smtp_secure !== undefined) await upsert('smtp_secure', smtp_secure);
         if (app_name !== undefined) await upsert('app_name', app_name);
+        if (company_name !== undefined) await upsert('company_name', company_name);
         if (app_favicon_url !== undefined) await upsert('app_favicon_url', app_favicon_url);
         if (app_version !== undefined) await upsert('app_version', app_version);
         if (footer_text !== undefined) await upsert('footer_text', footer_text);
+        if (terms_content !== undefined) await upsert('terms_conditions', terms_content);
+        if (privacy_content !== undefined) await upsert('privacy_policy', privacy_content);
 
         if (llm_provider !== undefined) await upsert('llm_provider', llm_provider);
         if (llm_model !== undefined) await upsert('llm_model', llm_model);
@@ -175,7 +194,7 @@ exports.updateSmtpSettings = async (req, res) => {
 // Get public settings (no auth required) - only branding info
 exports.getPublicSettings = async (req, res) => {
     try {
-        const keys = ['app_name', 'app_favicon_url', 'app_version', 'footer_text'];
+        const keys = ['app_name', 'company_name', 'app_favicon_url', 'app_version', 'footer_text'];
         const result = await pool.query(
             'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
             [keys]
@@ -183,6 +202,7 @@ exports.getPublicSettings = async (req, res) => {
 
         const settings = {
             app_name: process.env.VITE_APP_NAME || 'Mi Aplicación',
+            company_name: '',
             app_favicon_url: process.env.VITE_APP_FAVICON_URL || '/favicon.ico',
             app_version: '1.0.0',
             footer_text: '© 2024 Mi Aplicación. Todos los derechos reservados.'
@@ -190,6 +210,7 @@ exports.getPublicSettings = async (req, res) => {
 
         result.rows.forEach(row => {
             if (row.setting_key === 'app_name') settings.app_name = row.setting_value;
+            if (row.setting_key === 'company_name') settings.company_name = row.setting_value;
             if (row.setting_key === 'app_favicon_url') settings.app_favicon_url = row.setting_value;
             if (row.setting_key === 'app_version') settings.app_version = row.setting_value;
             if (row.setting_key === 'footer_text') settings.footer_text = row.setting_value;
@@ -304,5 +325,57 @@ exports.getPublicOAuthSettings = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error al obtener configuración OAuth pública' });
+    }
+};
+
+// Get legal content (public - no auth required)
+exports.getLegalContent = async (req, res) => {
+    const { type } = req.params; // 'terms' | 'privacy'
+
+    if (!['terms', 'privacy'].includes(type)) {
+        return res.status(400).json({ message: 'Tipo de contenido legal inválido' });
+    }
+
+    const key = type === 'terms' ? 'terms_conditions' : 'privacy_policy';
+    const title = type === 'terms' ? 'Términos y Condiciones' : 'Política de Privacidad';
+
+    try {
+        // Fetch legal content along with branding info for variable replacement
+        const result = await pool.query(
+            `SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)`,
+            [[key, 'app_name', 'company_name']]
+        );
+
+        let content = '';
+        let appName = process.env.VITE_APP_NAME || 'Mi Aplicación';
+        let companyName = '';
+
+        result.rows.forEach(row => {
+            if (row.setting_key === key) content = row.setting_value || '';
+            if (row.setting_key === 'app_name') appName = row.setting_value || appName;
+            if (row.setting_key === 'company_name') companyName = row.setting_value || '';
+        });
+
+        if (!content) {
+            return res.json({
+                content: `<p>No hay ${title.toLowerCase()} disponibles.</p>`,
+                title
+            });
+        }
+
+        // Replace dynamic placeholders
+        content = content
+            .replace(/%APP_NAME%/g, appName)
+            .replace(/%COMPANY_NAME%/g, companyName)
+            .replace(/\[Nombre de tu App\]/g, appName)
+            .replace(/\[Nombre de tu Empresa o Desarrollador\]/g, companyName);
+
+        res.json({
+            content,
+            title
+        });
+    } catch (err) {
+        console.error('Error fetching legal content:', err);
+        res.status(500).json({ message: 'Error al obtener contenido legal' });
     }
 };

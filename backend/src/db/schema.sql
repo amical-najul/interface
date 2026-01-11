@@ -109,3 +109,38 @@ CREATE TABLE IF NOT EXISTS ai_usage_logs (
 
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_ai_usage_user_date ON ai_usage_logs(user_id, created_at);
+
+-- Tabla para traducciones multi-idioma (JSONB)
+CREATE TABLE IF NOT EXISTS translations (
+    id SERIAL PRIMARY KEY,
+    key VARCHAR(255) UNIQUE NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'common',
+    translations JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_translations_key ON translations(key);
+CREATE INDEX IF NOT EXISTS idx_translations_category ON translations(category);
+
+-- Seed Default Translations
+INSERT INTO translations (key, category, translations) VALUES
+-- Common
+('common.save', 'common', '{"es": "Guardar", "en": "Save", "pt": "Salvar"}'),
+('common.cancel', 'common', '{"es": "Cancelar", "en": "Cancel", "pt": "Cancelar"}'),
+('common.loading', 'common', '{"es": "Cargando...", "en": "Loading...", "pt": "Carregando..."}'),
+('common.error', 'common', '{"es": "Error", "en": "Error", "pt": "Erro"}'),
+('common.success', 'common', '{"es": "Éxito", "en": "Success", "pt": "Sucesso"}'),
+-- Auth
+('auth.login', 'auth', '{"es": "Iniciar Sesión", "en": "Log In", "pt": "Entrar"}'),
+('auth.logout', 'auth', '{"es": "Cerrar Sesión", "en": "Log Out", "pt": "Sair"}'),
+-- Settings
+('settings.title', 'settings', '{"es": "Configuración de Cuenta", "en": "Account Settings", "pt": "Configurações da Conta"}'),
+('settings.darkMode', 'settings', '{"es": "Modo Oscuro", "en": "Dark Mode", "pt": "Modo Escuro"}'),
+('settings.language', 'settings', '{"es": "Idioma", "en": "Language", "pt": "Idioma"}'),
+('settings.profile', 'settings', '{"es": "Perfil", "en": "Profile", "pt": "Perfil"}'),
+('settings.security', 'settings', '{"es": "Seguridad", "en": "Security", "pt": "Segurança"}'),
+('settings.preferences', 'settings', '{"es": "Preferencias", "en": "Preferences", "pt": "Preferências"}'),
+('settings.info', 'settings', '{"es": "Información", "en": "Info", "pt": "Informações"}')
+ON CONFLICT (key) DO UPDATE SET translations = EXCLUDED.translations;
+
+

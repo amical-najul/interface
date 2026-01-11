@@ -2,16 +2,21 @@ import React, { useState, useEffect } from 'react';
 import userService from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 import { useBranding } from '../../context/BrandingContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import DeleteAccountModal from './DeleteAccountModal';
+import LegalContentModal from '../LegalContentModal';
 
 const UserSettingsModal = ({ isOpen, onClose }) => {
     const { user, updateProfile } = useAuth();
     const { appName, appVersion, footerText, appFaviconUrl } = useBranding();
+    const { language, changeLanguage, availableLanguages, t } = useLanguage();
 
     const [activeTab, setActiveTab] = useState('profile');
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [legalModal, setLegalModal] = useState({ isOpen: false, type: null });
 
     // ... (keep state) ...
 
@@ -27,7 +32,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         confirmPassword: ''
     });
 
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         if (isOpen) {
@@ -93,11 +98,6 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-    };
 
     const fileInputRef = React.useRef(null);
     const handleAvatarClick = () => fileInputRef.current?.click();
@@ -111,8 +111,8 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: 'La imagen no debe superar los 5MB' });
+        if (file.size > 12 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'La imagen no debe superar los 12MB' });
             return;
         }
 
@@ -152,19 +152,35 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleLanguageChange = async (e) => {
+        const newLang = e.target.value;
+        changeLanguage(newLang);
+        try {
+            // Sync with backend (must send name/email to avoid nulling them)
+            const updatedUser = await userService.updateProfile({
+                name: profileData.name,
+                email: profileData.email,
+                language_preference: newLang
+            });
+            updateProfile(updatedUser);
+        } catch (err) {
+            console.error('Error syncing language preference:', err);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
         // ... (keep structure wrapper) ... 
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
-                <div className="bg-white w-full h-full sm:w-[420px] sm:h-[80vh] sm:max-h-[800px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-in-out">
+                <div className="bg-white dark:bg-gray-800 w-full h-full sm:w-[420px] sm:h-[80vh] sm:max-h-[800px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-in-out">
 
                     {/* Header & Tabs (Keep them as is in logic, assumed unchanged in replacement range unless included) */}
                     {/* ... Since I'm viewing lines 159-417, I'm replacing handleAvatarDelete and the JSX return logic ... */}
 
-                    <div className="bg-gray-50 border-b border-gray-100 p-6 flex justify-between items-center shrink-0">
-                        <h2 className="text-xl font-bold text-gray-800">Configuración de Cuenta</h2>
+                    <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 p-6 flex justify-between items-center shrink-0">
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('settings.title')}</h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -182,10 +198,10 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                     ? 'border-[#008a60] text-[#008a60]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                             >
-                                {tab === 'profile' && 'Perfil'}
-                                {tab === 'security' && 'Seguridad'}
-                                {tab === 'preferences' && 'Preferencias'}
-                                {tab === 'info' && 'Información'}
+                                {tab === 'profile' && t('settings.tabs.profile')}
+                                {tab === 'security' && t('settings.tabs.security')}
+                                {tab === 'preferences' && t('settings.tabs.preferences')}
+                                {tab === 'info' && t('settings.tabs.info')}
                             </button>
                         ))}
                     </div>
@@ -251,14 +267,14 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                             onClick={handleAvatarClick}
                                             className="text-sm text-[#008a60] hover:underline mt-1 font-medium"
                                         >
-                                            Cambiar foto
+                                            {t('settings.profile.change_photo')}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="grid gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.name_label')}</label>
                                         <input
                                             type="text"
                                             value={profileData.name}
@@ -267,24 +283,24 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.email_label')}</label>
                                         <input
                                             type="email"
                                             value={profileData.email}
                                             disabled
                                             className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed text-base"
                                         />
-                                        <p className="text-xs text-gray-400 mt-1">Para cambiar tu email, usa la opción específica de seguridad.</p>
+                                        <p className="text-xs text-gray-400 mt-1">{t('settings.profile.email_hint')}</p>
                                     </div>
                                 </div>
 
-                                <div className="pt-4 sticky bottom-0 bg-white pb-2">
+                                <div className="pt-4 sticky bottom-0 bg-white dark:bg-gray-800 pb-2 border-t border-gray-100 dark:border-gray-700 mt-2">
                                     <button
                                         type="submit"
                                         disabled={isLoading}
                                         className="w-full sm:w-auto px-6 py-3 bg-[#008a60] text-white rounded-lg font-medium hover:bg-[#00704e] transition-colors disabled:opacity-50 text-base shadow-sm"
                                     >
-                                        {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+                                        {isLoading ? t('settings.profile.saving') : t('settings.profile.save')}
                                     </button>
                                 </div>
                             </form>
@@ -293,10 +309,10 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                         {activeTab === 'security' && (
                             <div className="space-y-8">
                                 <form onSubmit={handlePasswordChange} className="space-y-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Cambiar Contraseña</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t('settings.security.change_password')}</h3>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.current_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.currentPassword}
@@ -305,7 +321,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.new_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.newPassword}
@@ -314,7 +330,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.confirm_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.confirmPassword}
@@ -328,7 +344,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         disabled={isLoading}
                                         className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition-colors disabled:opacity-50 text-base"
                                     >
-                                        {isLoading ? 'Actualizando...' : 'Actualizar Contraseña'}
+                                        {isLoading ? t('settings.security.updating') : t('settings.security.update_btn')}
                                     </button>
                                 </form>
 
@@ -336,14 +352,14 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                     <h3 className="text-lg font-semibold text-red-600 border-b border-red-100 pb-2 mb-4">Zona de Peligro</h3>
                                     <div className="bg-red-50 p-6 rounded-xl border border-red-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div>
-                                            <h4 className="font-semibold text-red-800">Eliminar Cuenta</h4>
-                                            <p className="text-sm text-red-600 mt-1">Esta acción es permanente y no se puede deshacer.</p>
+                                            <h4 className="font-semibold text-red-800">{t('settings.security.delete_account')}</h4>
+                                            <p className="text-sm text-red-600 mt-1">{t('settings.security.delete_warning')}</p>
                                         </div>
                                         <button
                                             onClick={handleDeleteAccountClick}
                                             className="whitespace-nowrap px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all text-sm font-medium shadow-sm"
                                         >
-                                            Eliminar mi cuenta
+                                            {t('settings.security.delete_btn')}
                                         </button>
                                     </div>
                                 </div>
@@ -354,8 +370,8 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                     <div>
-                                        <h3 className="font-medium text-gray-900">Tema Oscuro</h3>
-                                        <p className="text-sm text-gray-500">Cambiar la apariencia de la aplicación.</p>
+                                        <h3 className="font-medium text-gray-900">{t('settings.darkMode')}</h3>
+                                        <p className="text-sm text-gray-500">{t('settings.darkMode_desc')}</p>
                                     </div>
                                     <button
                                         onClick={toggleTheme}
@@ -363,6 +379,24 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                     >
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
+                                    <div>
+                                        <h3 className="font-medium text-gray-900 dark:text-white">{t('settings.language')}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.language_desc')}</p>
+                                    </div>
+                                    <select
+                                        value={language}
+                                        onChange={handleLanguageChange}
+                                        className="form-select block w-32 px-3 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] sm:text-sm rounded-md dark:bg-slate-800 dark:text-white"
+                                    >
+                                        {availableLanguages.map((lang) => (
+                                            <option key={lang.code} value={lang.code}>
+                                                {lang.flag} {lang.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                         )}
@@ -380,13 +414,23 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                 <p className="text-gray-500">Versión {appVersion || '1.0.0'}</p>
 
                                 <div className="flex justify-center gap-4 mt-8">
-                                    <button className="text-[#008a60] hover:underline text-sm">Términos y Condiciones</button>
+                                    <button
+                                        onClick={() => setLegalModal({ isOpen: true, type: 'terms' })}
+                                        className="text-[#008a60] hover:underline text-sm"
+                                    >
+                                        {t('settings.info.terms')}
+                                    </button>
                                     <span className="text-gray-300">|</span>
-                                    <button className="text-[#008a60] hover:underline text-sm">Política de Privacidad</button>
+                                    <button
+                                        onClick={() => setLegalModal({ isOpen: true, type: 'privacy' })}
+                                        className="text-[#008a60] hover:underline text-sm"
+                                    >
+                                        {t('settings.info.privacy')}
+                                    </button>
                                 </div>
 
                                 <div className="mt-12 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm inline-block">
-                                    {footerText || '© 2024 Mi Aplicación. Todos los derechos reservados.'}
+                                    {footerText || `© 2024 ${appName || 'Mi Aplicación'}. ${t('settings.info.footer')}`}
                                 </div>
                             </div>
                         )}
@@ -398,6 +442,12 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDeleteAccount}
+            />
+
+            <LegalContentModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ isOpen: false, type: null })}
+                type={legalModal.type}
             />
         </>
     );

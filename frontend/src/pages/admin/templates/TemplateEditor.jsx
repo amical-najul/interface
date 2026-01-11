@@ -3,7 +3,7 @@ import { PLACEHOLDERS } from './constants';
 
 const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, handleSaveTemplate, setEditMode, error, success, settings }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <button
@@ -34,7 +34,7 @@ const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, hand
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del remitente</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del remitente</label>
                             <input
                                 type="text"
                                 value={formData.sender_name}
@@ -44,7 +44,7 @@ const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, hand
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email remitente</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email remitente</label>
                             <input
                                 type="email"
                                 value={formData.sender_email}
@@ -87,13 +87,13 @@ const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, hand
                     </div>
 
                     {/* Variables */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Variables disponibles</h4>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Variables disponibles</h4>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                             {PLACEHOLDERS.map(p => (
                                 <div key={p.var} className="flex items-center gap-2">
-                                    <code className="bg-gray-200 px-1 rounded text-xs">{p.var}</code>
-                                    <span className="text-gray-500 text-xs">{p.desc}</span>
+                                    <code className="bg-[#008a60] text-white px-2 py-0.5 rounded text-xs font-semibold">{p.var}</code>
+                                    <span className="text-gray-600 dark:text-gray-400 text-xs">{p.desc}</span>
                                 </div>
                             ))}
                         </div>

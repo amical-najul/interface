@@ -72,9 +72,9 @@ const LegalTab = () => {
     if (loading) return <div className="p-4">Cargando...</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6 max-w-4xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-gray-600" />
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 max-w-4xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 Plantillas Legales
             </h3>
 
@@ -83,25 +83,25 @@ const LegalTab = () => {
 
             <div className="space-y-8">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Términos y Condiciones</label>
-                    <p className="text-xs text-gray-500 mb-2">Acepta formato Markdown básico.</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Términos y Condiciones</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Acepta formato Markdown básico.</p>
                     <textarea
                         value={legal.terms_content}
                         onChange={(e) => setLegal({ ...legal, terms_content: e.target.value })}
                         rows="10"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         placeholder="# Términos y Condiciones..."
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Política de Privacidad</label>
-                    <p className="text-xs text-gray-500 mb-2">Acepta formato Markdown básico.</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Política de Privacidad</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Acepta formato Markdown básico.</p>
                     <textarea
                         value={legal.privacy_content}
                         onChange={(e) => setLegal({ ...legal, privacy_content: e.target.value })}
                         rows="10"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         placeholder="# Política de Privacidad..."
                     />
                 </div>

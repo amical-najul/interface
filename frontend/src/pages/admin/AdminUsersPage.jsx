@@ -179,7 +179,7 @@ const AdminUsersPage = () => {
         <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Usuarios</h2>
                     <p className="text-gray-500 text-sm">Administra roles, accesos y crea nuevas cuentas.</p>
                 </div>
                 <button

@@ -2,10 +2,10 @@ import React from 'react';
 
 const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, settingsSaving, error, success }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Configuración del SMTP</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Configuración del SMTP</h3>
                     <p className="text-sm text-gray-500">Usa tu propio servidor SMTP para el envío de correos electrónicos.</p>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -29,7 +29,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
 
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!settings.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email del remitente</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email del remitente</label>
                     <input
                         type="email"
                         value={settings.sender_email}
@@ -40,7 +40,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Host del servidor SMTP</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Host del servidor SMTP</label>
                     <input
                         type="text"
                         value={settings.smtp_host}
@@ -51,7 +51,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Puerto</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Puerto</label>
                     <input
                         type="text"
                         value={settings.smtp_port}
@@ -62,7 +62,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Modo de seguridad</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modo de seguridad</label>
                     <select
                         value={settings.smtp_secure}
                         onChange={(e) => handleSettingsChange('smtp_secure', e.target.value)}
@@ -75,7 +75,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de usuario</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de usuario</label>
                     <input
                         type="text"
                         value={settings.smtp_user}
@@ -86,7 +86,7 @@ const SmtpSettings = ({ settings, handleSettingsChange, handleSaveSettings, sett
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label>
                     <input
                         type="password"
                         value={settings.smtp_pass}

@@ -4,6 +4,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleConfigContext } from './context/GoogleConfigContext';
 import { BrandingProvider } from './context/BrandingContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -62,46 +64,50 @@ const AuthWrapper = ({ children }) => {
 
 function App() {
   return (
-    <AuthWrapper>
-      <AuthProvider>
-        <BrandingProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/verify-email-change" element={<VerifyEmailChangePage />} />
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthWrapper>
+          <AuthProvider>
+            <BrandingProvider>
+              <BrowserRouter>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<LoginPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/verify-email-change" element={<VerifyEmailChangePage />} />
 
-              {/* User Routes */}
-              <Route path="/dashboard" element={
-                <PrivateRoute>
-                  <UserLayout />
-                </PrivateRoute>
-              }>
-                <Route index element={<UserDashboardPage />} />
-              </Route>
+                  {/* User Routes */}
+                  <Route path="/dashboard" element={
+                    <PrivateRoute>
+                      <UserLayout />
+                    </PrivateRoute>
+                  }>
+                    <Route index element={<UserDashboardPage />} />
+                  </Route>
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }>
-                <Route index element={<Navigate to="/admin/profile" replace />} />
-                <Route path="profile" element={<AdminProfilePage />} />
-                <Route path="users" element={<AdminUsersPage />} />
-                <Route path="general" element={<AdminGeneralSettingsPage />} />
-                <Route path="google-auth" element={<AdminGoogleAuthPage />} />
-              </Route>
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }>
+                    <Route index element={<Navigate to="/admin/profile" replace />} />
+                    <Route path="profile" element={<AdminProfilePage />} />
+                    <Route path="users" element={<AdminUsersPage />} />
+                    <Route path="general" element={<AdminGeneralSettingsPage />} />
+                    <Route path="google-auth" element={<AdminGoogleAuthPage />} />
+                  </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </BrandingProvider>
-      </AuthProvider>
-    </AuthWrapper>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </BrowserRouter>
+            </BrandingProvider>
+          </AuthProvider>
+        </AuthWrapper>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

@@ -135,14 +135,14 @@ const AiTab = () => {
     return (
         <div className="space-y-8">
             {/* Global Switch */}
-            <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-500">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-indigo-500">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             <Cpu className="w-5 h-5" />
                             Control Maestro
                         </h3>
-                        <p className="text-gray-500 text-sm">Habilitar o deshabilitar toda la funcionalidad de IA en la plataforma.</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Habilitar o deshabilitar toda la funcionalidad de IA en la plataforma.</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -151,8 +151,8 @@ const AiTab = () => {
                             checked={globalEnabled}
                             onChange={(e) => setGlobalEnabled(e.target.checked)}
                         />
-                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
-                        <span className="ml-3 text-sm font-medium text-gray-900">
+                        <div className="w-14 h-7 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                             {globalEnabled ? 'IA Habilitada' : 'IA Deshabilitada'}
                         </span>
                     </label>
@@ -162,26 +162,26 @@ const AiTab = () => {
             <div className={`space-y-8 transition-opacity ${!globalEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
 
                 {/* Model Configuration */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <Server className="w-5 h-5 text-gray-600" />
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <Server className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             Proveedores y Modelos
                         </h3>
                     </div>
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Primary Provider */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Proveedor Principal</h4>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-200 uppercase tracking-wide">Proveedor Principal</h4>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proveedor</label>
                                 <select
                                     value={settings.llm_provider || 'openai'}
                                     onChange={(e) => {
                                         handleSettingsChange('llm_provider', e.target.value);
                                         handleSettingsChange('llm_model', '');
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 dark:text-white"
                                 >
                                     {LLM_PROVIDERS.map(p => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -189,11 +189,11 @@ const AiTab = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modelo</label>
                                 <select
                                     value={settings.llm_model}
                                     onChange={(e) => handleSettingsChange('llm_model', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 dark:text-white"
                                 >
                                     <option value="">Seleccionar modelo...</option>
                                     <optgroup label="Modelos Generales">
@@ -209,7 +209,7 @@ const AiTab = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                                     <Key className="w-3 h-3" /> API Key
                                 </label>
                                 <input
@@ -217,26 +217,26 @@ const AiTab = () => {
                                     value={settings.llm_api_key}
                                     onChange={(e) => handleSettingsChange('llm_api_key', e.target.value)}
                                     placeholder={settings.llm_api_key ? '••••••••' : 'sk-...'}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Secondary Provider */}
-                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="space-y-4 bg-gray-50 dark:bg-slate-700 p-4 rounded-lg border border-gray-200 dark:border-slate-600">
                             <div className="flex justify-between">
-                                <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Proveedor Secundario (Backup)</h4>
-                                <span className="text-xs text-gray-500">Opcional</span>
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 uppercase tracking-wide">Proveedor Secundario (Backup)</h4>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Opcional</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proveedor</label>
                                 <select
                                     value={settings.llm_provider_secondary || ''}
                                     onChange={(e) => {
                                         handleSettingsChange('llm_provider_secondary', e.target.value);
                                         handleSettingsChange('llm_model_secondary', '');
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-800 dark:text-white"
                                 >
                                     <option value="">Desactivado</option>
                                     {LLM_PROVIDERS.map(p => (
@@ -245,12 +245,12 @@ const AiTab = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modelo</label>
                                 <select
                                     value={settings.llm_model_secondary}
                                     onChange={(e) => handleSettingsChange('llm_model_secondary', e.target.value)}
                                     disabled={!settings.llm_provider_secondary}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white disabled:bg-gray-100"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-800 dark:text-white disabled:bg-gray-100 dark:disabled:bg-slate-900"
                                 >
                                     <option value="">Seleccionar modelo...</option>
                                     {settings.llm_provider_secondary && (
@@ -270,7 +270,7 @@ const AiTab = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                                     <Key className="w-3 h-3" /> API Key
                                 </label>
                                 <input
@@ -279,7 +279,7 @@ const AiTab = () => {
                                     onChange={(e) => handleSettingsChange('llm_api_key_secondary', e.target.value)}
                                     disabled={!settings.llm_provider_secondary}
                                     placeholder={settings.llm_api_key_secondary ? '••••••••' : 'sk-...'}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm disabled:bg-gray-100"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm disabled:bg-gray-100 dark:disabled:bg-slate-900 dark:bg-slate-800 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -287,29 +287,29 @@ const AiTab = () => {
                 </div>
 
                 {/* Limits Table */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-gray-600" />
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             Límites y Cuotas por Rol
                         </h3>
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilitado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens / Día</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peticiones / Día</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rol</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Habilitado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tokens / Día</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Peticiones / Día</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
                                 {limits.map((limit, idx) => (
                                     <tr key={limit.role} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 capitalize">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">
                                                 {getRoleName(limit.role)}
                                             </div>
                                         </td>
@@ -318,7 +318,7 @@ const AiTab = () => {
                                                 type="checkbox"
                                                 checked={limit.enabled}
                                                 onChange={(e) => handleLimitChange(idx, 'enabled', e.target.checked)}
-                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded bg-white dark:bg-slate-700 dark:border-slate-600"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -326,7 +326,7 @@ const AiTab = () => {
                                                 type="number"
                                                 value={limit.daily_token_limit}
                                                 onChange={(e) => handleLimitChange(idx, 'daily_token_limit', e.target.value)}
-                                                className="block w-32 px-2 py-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                className="block w-32 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-slate-700 dark:text-white"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -334,7 +334,7 @@ const AiTab = () => {
                                                 type="number"
                                                 value={limit.daily_request_limit}
                                                 onChange={(e) => handleLimitChange(idx, 'daily_request_limit', e.target.value)}
-                                                className="block w-32 px-2 py-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                className="block w-32 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm dark:bg-slate-700 dark:text-white"
                                             />
                                         </td>
                                     </tr>

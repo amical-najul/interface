@@ -168,12 +168,19 @@ exports.deleteUser = async (req, res) => {
 // Profile: Update Me
 exports.updateProfile = async (req, res) => {
     const userId = req.user.id;
-    const { name, email, password } = req.body;
+    const { name, email, password, language_preference } = req.body;
 
     try {
         let query = "UPDATE users SET name=$1, email=$2";
         let params = [name, email];
         let idx = 3;
+
+        // Update language preference if provided
+        if (language_preference) {
+            query += `, language_preference=$${idx}`;
+            params.push(language_preference);
+            idx++;
+        }
 
         let newHash = null;
 
@@ -213,7 +220,7 @@ exports.updateProfile = async (req, res) => {
             idx++;
         }
 
-        query += ` WHERE id=$${idx} RETURNING id, email, name, role, avatar_url`;
+        query += ` WHERE id=$${idx} RETURNING id, email, name, role, avatar_url, language_preference`;
         params.push(userId);
 
         const result = await pool.query(query, params);

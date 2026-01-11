@@ -6,11 +6,13 @@ import VisualGoogleButton from '../components/VisualGoogleButton';
 import AlertModal from '../components/AlertModal';
 import { useGoogleConfig } from '../context/GoogleConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import authService from '../services/authService';
 
 function LoginPage() {
     const navigate = useNavigate();
     const { login } = useAuth(); // Connect to AuthContext
+    const { t } = useLanguage();
     const { enabled: googleAuthEnabled } = useGoogleConfig();
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
@@ -60,8 +62,8 @@ function LoginPage() {
 
     const handleVisualClick = () => {
         showAlert(
-            "Configuración Requerida",
-            "La autenticación con Google no está configurada. Por favor, inicia sesión con email y contraseña.",
+            t('auth.config_required'),
+            t('auth.google_not_configured'),
             "info"
         );
     };
@@ -138,7 +140,7 @@ function LoginPage() {
                         onClick={() => { setShowVerification(false); setIsLogin(true); }}
                         className="text-[#008a60] font-semibold hover:underline"
                     >
-                        Volver al Login
+                        {t('auth.login_action')}
                     </button>
                 </div>
             </div>
@@ -150,16 +152,16 @@ function LoginPage() {
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
                 <div className="p-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.welcome')}</h1>
                         <p className="text-gray-500">
-                            {isLogin ? 'Inicia sesión para continuar aprendiendo' : 'Crea tu cuenta para comenzar'}
+                            {isLogin ? t('auth.subtitle_login') : t('auth.subtitle_register')}
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                                Email
+                                {t('auth.email_label')}
                             </label>
                             <input
                                 type="email"
@@ -172,7 +174,7 @@ function LoginPage() {
 
                         <div>
                             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                                Contraseña
+                                {t('auth.password_label')}
                             </label>
                             <PasswordInput
                                 value={password}
@@ -181,7 +183,7 @@ function LoginPage() {
                             {isLogin && (
                                 <div className="flex justify-end mt-2">
                                     <Link to="/forgot-password" className="text-sm text-[#008a60] hover:underline font-medium">
-                                        ¿Olvidaste tu contraseña?
+                                        {t('auth.forgot_password_link')}
                                     </Link>
                                 </div>
                             )}
@@ -198,13 +200,13 @@ function LoginPage() {
                             disabled={isLoading}
                             className="w-full bg-[#008a60] text-white font-bold py-3 rounded-lg hover:bg-[#007a55] transition-colors disabled:opacity-70"
                         >
-                            {isLoading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
+                            {isLoading ? 'Cargando...' : (isLogin ? t('auth.login_button') : t('auth.register_button'))}
                         </button>
                     </form>
 
                     <div className="my-6 flex items-center">
                         <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">O continúa con</span>
+                        <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">{t('auth.or_continue')}</span>
                         <div className="flex-grow border-t border-gray-200"></div>
                     </div>
 
@@ -220,12 +222,12 @@ function LoginPage() {
 
                 <div className="bg-gray-50 p-4 text-center">
                     <p className="text-gray-600 text-sm">
-                        {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
+                        {isLogin ? `${t('auth.no_account_question')} ` : `${t('auth.has_account_question')} `}
                         <button
                             onClick={() => { setIsLogin(!isLogin); setError(''); }}
                             className="text-[#008a60] font-bold hover:underline"
                         >
-                            {isLogin ? 'Regístrate' : 'Inicia Sesión'}
+                            {isLogin ? t('auth.register_action') : t('auth.login_action')}
                         </button>
                     </p>
                 </div>

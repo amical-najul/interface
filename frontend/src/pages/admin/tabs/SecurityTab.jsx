@@ -91,10 +91,10 @@ const SecurityTab = () => {
     if (loading) return <div className="p-8 text-center text-gray-500">Cargando seguridad...</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-gray-600" />
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     Seguridad de Sesiones (JWT)
                 </h3>
             </div>
@@ -122,7 +122,7 @@ const SecurityTab = () => {
 
                 {/* Status */}
                 <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">Estado Actual</h4>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">Estado Actual</h4>
                     <div className="flex items-center gap-2">
                         {info.hasCustomJwtSecret ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -134,24 +134,25 @@ const SecurityTab = () => {
                                 Usando Clave por Defecto
                             </span>
                         )}
-                        {info.lastUpdated && <span className="text-xs text-gray-500">Actualizada: {new Date(info.lastUpdated).toLocaleDateString()}</span>}
+                        {/* Badges kept as is due to specific semantic colors, but date text update */}
+                        {info.lastUpdated && <span className="text-xs text-gray-500 dark:text-gray-400">Actualizada: {new Date(info.lastUpdated).toLocaleDateString()}</span>}
                     </div>
                 </div>
 
                 {/* Generator Form */}
                 <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-700">Nuevo Secreto JWT</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nuevo Secreto JWT</label>
                     <div className="flex gap-2">
                         <input
                             type="text"
                             readOnly
                             value={newSecret}
                             placeholder="Genera un nuevo secreto para continuar..."
-                            className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50 text-gray-500 cursor-not-allowed font-mono px-3 py-2 border"
+                            className="flex-1 block w-full rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50 dark:bg-slate-700 text-gray-500 dark:text-gray-400 cursor-not-allowed font-mono px-3 py-2 border"
                         />
                         <button
                             onClick={generateSecureSecret}
-                            className="inline-flex items-center px-4 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="inline-flex items-center px-4 py-2 border border-blue-300 dark:border-blue-700 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-200 bg-white dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Generar
@@ -161,7 +162,7 @@ const SecurityTab = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="pt-4 border-t border-gray-100">
+                <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
                     <button
                         onClick={openModal}
                         disabled={!newSecret}

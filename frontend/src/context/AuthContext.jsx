@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useLanguage } from './LanguageContext';
 
 const AuthContext = createContext(null);
 
@@ -6,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { changeLanguage } = useLanguage();
 
     useEffect(() => {
         try {
@@ -18,6 +20,9 @@ export const AuthProvider = ({ children }) => {
                 if (parsedUser && typeof parsedUser === 'object' && parsedUser.email) {
                     setUser(parsedUser);
                     setToken(storedToken);
+                    if (parsedUser.language_preference) {
+                        changeLanguage(parsedUser.language_preference);
+                    }
                 } else {
                     console.warn('Invalid user structure in localStorage, clearing...');
                     localStorage.removeItem('user');
@@ -34,8 +39,13 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (userData, authToken) => {
+        console.log('Login called:', userData);
         setUser(userData);
         setToken(authToken);
+        if (userData.language_preference) {
+            console.log('Setting language from login:', userData.language_preference);
+            changeLanguage(userData.language_preference);
+        }
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', authToken);
     };
@@ -49,8 +59,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateProfile = (updatedUser) => {
+        console.log('updateProfile called:', updatedUser);
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
+        if (updatedUser.language_preference) {
+            console.log('Updating language from profile update:', updatedUser.language_preference);
+            changeLanguage(updatedUser.language_preference);
+        }
     };
 
     return (

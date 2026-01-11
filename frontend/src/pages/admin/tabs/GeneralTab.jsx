@@ -12,6 +12,7 @@ const GeneralTab = () => {
     // Branding + Security Settings
     const [settings, setSettings] = useState({
         app_name: '',
+        company_name: '',
         app_favicon_url: '',
         app_version: '',
         footer_text: '',
@@ -36,6 +37,7 @@ const GeneralTab = () => {
                 const data = await resAuth.json();
                 setSettings({
                     app_name: data.app_name || '',
+                    company_name: data.company_name || '',
                     app_favicon_url: data.app_favicon_url || '',
                     app_version: data.app_version || '',
                     footer_text: data.footer_text || '',
@@ -59,6 +61,7 @@ const GeneralTab = () => {
 
         const payload = {
             app_name: settings.app_name,
+            company_name: settings.company_name,
             app_favicon_url: settings.app_favicon_url,
             app_version: settings.app_version,
             footer_text: settings.footer_text,
@@ -131,9 +134,9 @@ const GeneralTab = () => {
     if (loading) return <div className="p-4">Cargando...</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6 max-w-4xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <Layout className="w-5 h-5 text-gray-600" />
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-700/30 p-6 max-w-4xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                <Layout className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 Identidad y Branding
             </h3>
 
@@ -154,6 +157,18 @@ const GeneralTab = () => {
                 </div>
 
                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Empresa</label>
+                    <input
+                        type="text"
+                        value={settings.company_name}
+                        onChange={(e) => setSettings({ ...settings, company_name: e.target.value })}
+                        placeholder="Mi Empresa S.A."
+                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Usado en plantillas legales (Términos y Privacidad).</p>
+                </div>
+
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Favicon / Logo</label>
                     <div className="flex items-start gap-4">
                         <div className="w-16 h-16 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative group">
@@ -165,7 +180,7 @@ const GeneralTab = () => {
                         </div>
                         <div className="flex flex-col gap-2">
                             <div className="flex gap-2">
-                                <label className="cursor-pointer bg-white px-3 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50">
+                                <label className="cursor-pointer bg-[#008a60] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#007a55]">
                                     Subir Imagen
                                     <input type="file" className="hidden" accept="image/*" onChange={handleFaviconUpload} />
                                 </label>
@@ -208,17 +223,17 @@ const GeneralTab = () => {
                 </div>
 
                 {/* Security Rate Limits Section */}
-                <div className="pt-6 border-t">
-                    <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-gray-600" />
+                <div className="pt-6 border-t dark:border-slate-700">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         Limites de Seguridad
                     </h4>
-                    <p className="text-xs text-gray-500 mb-4">Estos limites aplican solo a usuarios, no a administradores.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Estos limites aplican solo a usuarios, no a administradores.</p>
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                             <div>
-                                <p className="font-medium text-gray-700">Limite de cambios de foto</p>
+                                <p className="font-medium text-gray-700 dark:text-gray-200">Limite de cambios de foto</p>
                                 <p className="text-xs text-gray-500">Max 2 cambios de avatar cada 24 horas</p>
                             </div>
                             <button
@@ -230,9 +245,9 @@ const GeneralTab = () => {
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                             <div>
-                                <p className="font-medium text-gray-700">Limite de cambios de contraseña</p>
+                                <p className="font-medium text-gray-700 dark:text-gray-200">Limite de cambios de contraseña</p>
                                 <p className="text-xs text-gray-500">Max 3 cambios cada 24 horas + no reutilizar ultimas 5</p>
                             </div>
                             <button
@@ -244,9 +259,9 @@ const GeneralTab = () => {
                             </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                             <div>
-                                <p className="font-medium text-gray-700">Limite de intentos de login</p>
+                                <p className="font-medium text-gray-700 dark:text-gray-200">Limite de intentos de login</p>
                                 <p className="text-xs text-gray-500">Bloqueo temporal tras intentos fallidos</p>
                             </div>
                             <button
@@ -260,7 +275,7 @@ const GeneralTab = () => {
                     </div>
                 </div>
 
-                <div className="pt-4 border-t">
+                <div className="pt-4 border-t dark:border-slate-700">
                     <button
                         onClick={handleSaveSettings}
                         disabled={settingsSaving}

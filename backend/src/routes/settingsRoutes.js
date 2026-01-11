@@ -26,4 +26,7 @@ router.put('/security/jwt', auth, admin, advancedSettingsController.updateJwtSec
 router.get('/ai', auth, admin, advancedSettingsController.getAiSettings);
 router.put('/ai', auth, admin, advancedSettingsController.updateAiSettings);
 
+// Legal content (public - no auth required)
+router.get('/legal/:type', settingsController.getLegalContent);
+
 module.exports = router;

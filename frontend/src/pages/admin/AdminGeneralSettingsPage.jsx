@@ -19,7 +19,7 @@ const AdminGeneralSettingsPage = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Ajustes del Sistema</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ajustes del Sistema</h1>
 
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Sidebar Navigation */}
@@ -33,10 +33,10 @@ const AdminGeneralSettingsPage = () => {
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
                                         ? 'bg-[#008a60] text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                                         }`}
                                 >
-                                    <Icon className={`w-5 h-5 mr-3 ${activeTab === tab.id ? 'text-white' : 'text-gray-400'}`} />
+                                    <Icon className={`w-5 h-5 mr-3 ${activeTab === tab.id ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
                                     {tab.label}
                                 </button>
                             );

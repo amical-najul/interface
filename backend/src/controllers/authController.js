@@ -92,7 +92,7 @@ exports.login = async (req, res) => {
         res.json({
             message: 'Login exitoso',
             token,
-            user: { id: user.id, email: user.email, role: user.role, name: user.name }
+            user: { id: user.id, email: user.email, role: user.role, name: user.name, language_preference: user.language_preference }
         });
 
     } catch (err) {
@@ -173,7 +173,8 @@ exports.googleLogin = async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                language_preference: user.language_preference
             }
         });
 

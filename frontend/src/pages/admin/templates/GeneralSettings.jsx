@@ -2,7 +2,7 @@ import React from 'react';
 
 const GeneralSettings = ({ settings, handleSettingsChange, handleFaviconUpload, handleFaviconDelete, settingsSaving, handleSaveSettings, error, success }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-8">
             {/* Branding Section */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Personalización de Marca</h3>
@@ -12,7 +12,7 @@ const GeneralSettings = ({ settings, handleSettingsChange, handleFaviconUpload, 
 
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Aplicación</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la Aplicación</label>
                         <input
                             type="text"
                             value={settings.app_name}
@@ -24,7 +24,7 @@ const GeneralSettings = ({ settings, handleSettingsChange, handleFaviconUpload, 
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Favicon del Proyecto</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Favicon del Proyecto</label>
                         <div className="flex items-start gap-4">
                             <div className="w-16 h-16 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative group">
                                 {settings.app_favicon_url ? (
@@ -46,7 +46,7 @@ const GeneralSettings = ({ settings, handleSettingsChange, handleFaviconUpload, 
                                     />
                                     <label
                                         htmlFor="favicon-upload"
-                                        className="inline-block px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                        className="inline-block px-4 py-2 bg-[#008a60] text-white rounded-lg text-sm font-medium hover:bg-[#007a55] cursor-pointer"
                                     >
                                         Subir Nuevo
                                     </label>

@@ -96,9 +96,9 @@ const SmtpTab = () => {
     if (loading) return <div className="p-4">Cargando configuración SMTP...</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-gray-600" />
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 Configuración de Correo (SMTP)
             </h3>
 
@@ -111,56 +111,56 @@ const SmtpTab = () => {
                             onChange={(e) => handleChange('smtp_enabled', e.target.checked)}
                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 text-sm text-gray-900 font-medium">Habilitar envío de correos</span>
+                        <span className="ml-2 text-sm text-gray-900 dark:text-gray-200 font-medium">Habilitar envío de correos</span>
                     </label>
                 </div>
 
                 <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${!settings.smtp_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Host SMTP</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Host SMTP</label>
                         <input
                             type="text"
                             value={settings.smtp_host}
                             onChange={(e) => handleChange('smtp_host', e.target.value)}
                             placeholder="smtp.gmail.com"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Puerto</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Puerto</label>
                         <input
                             type="number"
                             value={settings.smtp_port}
                             onChange={(e) => handleChange('smtp_port', e.target.value)}
                             placeholder="587"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usuario</label>
                         <input
                             type="text"
                             value={settings.smtp_user}
                             onChange={(e) => handleChange('smtp_user', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label>
                         <input
                             type="password"
                             value={settings.smtp_pass}
                             placeholder={settings.smtp_pass ? '••••••••' : ''}
                             onChange={(e) => handleChange('smtp_pass', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Seguridad</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Seguridad</label>
                         <select
                             value={settings.smtp_secure}
                             onChange={(e) => handleChange('smtp_secure', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 dark:text-white"
                         >
                             <option value="false">Ninguna</option>
                             <option value="tls">TLS (STARTTLS)</option>
@@ -168,13 +168,13 @@ const SmtpTab = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email remitente (From)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email remitente (From)</label>
                         <input
                             type="email"
                             value={settings.sender_email}
                             onChange={(e) => handleChange('sender_email', e.target.value)}
                             placeholder="no-reply@midominio.com"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                 </div>

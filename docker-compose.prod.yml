@@ -1,36 +1,55 @@
 version: '3.8'
 
+# ============================================
+# DOCKER COMPOSE - PRODUCCIÓN (PORTAINER)
+# ============================================
+# Uso: Crear Stack en Portainer con este archivo
+# Variables: Copiar de portainer.env generado por setup:project
+# ============================================
+
 services:
   # Backend API
   api:
-    image: ghcr.io/tu-usuario/interfaz-api:latest
+    image: ghcr.io/${GITHUB_USER:-usuario}/interfaz-api:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: app_api
+    container_name: ${VITE_APP_NAME:-app}_api
     restart: always
     environment:
+      # Server
       - PORT=3000
+      - NODE_ENV=production
+      # Database
       - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
+      - DB_PORT=${DB_PORT:-5432}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
+      # Security
       - JWT_SECRET=${JWT_SECRET}
+      # Admin Seeding
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # MinIO / S3
       - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - MINIO_PORT=${MINIO_PORT}
-      - MINIO_USE_SSL=${MINIO_USE_SSL}
+      - MINIO_PORT=${MINIO_PORT:-443}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-true}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
+      # Email
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
-      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      # URLs
+      - FRONTEND_URL=https://${DOMAIN_NAME}
+      # OAuth
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     labels:
       - "traefik.enable=true"
-      # Router API
       - "traefik.http.routers.api.rule=Host(`api.${DOMAIN_NAME}`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=myresolver"
@@ -42,19 +61,19 @@ services:
 
   # Frontend Web
   web:
-    image: ghcr.io/tu-usuario/interfaz-web:latest
+    image: ghcr.io/${GITHUB_USER:-usuario}/interfaz-web:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: app_web
+      args:
+        - VITE_API_URL=https://api.${DOMAIN_NAME}
+        - VITE_APP_NAME=${VITE_APP_NAME}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
+        - VITE_GOOGLE_AUTH_ENABLED=${VITE_GOOGLE_AUTH_ENABLED:-false}
+    container_name: ${VITE_APP_NAME:-app}_web
     restart: always
-    environment:
-      - VITE_API_URL=https://api.${DOMAIN_NAME}
-      - VITE_APP_NAME=${VITE_APP_NAME}
-      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     labels:
       - "traefik.enable=true"
-      # Router Web
       - "traefik.http.routers.web.rule=Host(`${DOMAIN_NAME}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=myresolver"
@@ -63,6 +82,8 @@ services:
     networks:
       - traefik_proxy
       - internal_services
+    depends_on:
+      - api
 
 networks:
   traefik_proxy:

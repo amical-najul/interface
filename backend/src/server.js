@@ -39,6 +39,7 @@ const initDbAndStartServer = async () => {
         await ensureColumn('users', 'active', 'BOOLEAN DEFAULT TRUE');
         await ensureColumn('users', 'role', "VARCHAR(50) DEFAULT 'user'");
         await ensureColumn('users', 'status', "VARCHAR(20) DEFAULT 'active'");
+        await ensureColumn('users', 'language_preference', "VARCHAR(5) DEFAULT 'es'");
 
         // 3. Load Dynamic Settings
         try {

@@ -26,32 +26,38 @@ Bienvenido a la documentación completa de la aplicación. Aquí encontrarás to
 ### Requisitos Previos
 - Docker y Docker Compose
 - Node.js 20+ (para desarrollo local)
-- PostgreSQL (incluido en Docker)
-- MinIO (incluido en Docker)
+- PostgreSQL (externo o incluido en Docker)
+- MinIO (externo o incluido en Docker)
 
-### Configuración Inicial
+### Configuración con Setup Wizard (Recomendado)
 
-1. **Clonar el repositorio**
 ```bash
+# 1. Clonar el repositorio
 git clone <repository-url>
 cd Interfaz
-```
 
-2. **Configurar variables de entorno**
-```bash
-cp .env.example .env
-# Editar .env con tus credenciales
-```
+# 2. Ejecutar el Wizard de Configuración
+cd backend && npm run setup:project
 
-3. **Levantar contenedores**
-```bash
+# 3. El wizard generará:
+#    ├── .env          → Para desarrollo local
+#    └── portainer.env → Para Portainer (producción)
+
+# 4. Levantar contenedores (desarrollo)
 docker-compose up --build -d
 ```
 
-4. **Acceder a la aplicación**
-- Frontend: http://localhost:8090
-- Backend API: http://localhost:3001
-- Admin por defecto: `jock.alcantara@gmail.com` / `admin123`
+### Despliegue en Portainer (Producción)
+
+1. En **Portainer → Stacks → Add Stack**
+2. Pegar contenido de `docker-compose.prod.yml`
+3. En **Environment variables**, pegar el contenido de `portainer.env`
+4. **Deploy the Stack**
+
+### Acceso
+- **Frontend:** http://localhost:8090 (dev) | https://tudominio.com (prod)
+- **Backend API:** http://localhost:3001 (dev) | https://api.tudominio.com (prod)
+- **Admin:** Email y password definidos en el wizard
 
 ## 🏗️ Arquitectura
 
@@ -274,27 +280,45 @@ npm run dev
 - `context/` - AuthContext, GoogleConfigContext
 - `layouts/` - AdminLayout, UserLayout
 
-## 🌍 Despliegue a Producción
+## 🌍 Despliegue a Producción (Portainer)
 
-### Variables de Entorno Críticas
-
-```env
-NODE_ENV=production
-FRONTEND_URL=https://tudominio.com
-JWT_SECRET=<genera-una-clave-segura>
-DB_PASSWORD=<contraseña-segura>
-MINIO_ACCESS_KEY=<key-segura>
-MINIO_SECRET_KEY=<secret-segura>
+### Paso 1: Generar Configuración
+```bash
+cd backend && npm run setup:project
 ```
+> Esto genera `portainer.env` con todas las variables necesarias.
+
+### Paso 2: Crear Stack en Portainer
+1. Acceder a Portainer
+2. **Stacks → Add Stack**
+3. Nombre: `mi-app` (o el nombre de tu proyecto)
+4. **Build method:** Web editor
+5. Pegar contenido de `docker-compose.prod.yml`
+
+### Paso 3: Configurar Variables
+En la sección **Environment variables**:
+- **Editor mode:** Advanced
+- Pegar todo el contenido de `portainer.env`
+
+### Paso 4: Deploy
+Click en **Deploy the Stack**
+
+### Variables Críticas (generadas por el wizard)
+| Variable | Descripción |
+|----------|-------------|
+| `JWT_SECRET` | Clave para firmar tokens (128 chars) |
+| `DB_PASSWORD` | Password de PostgreSQL |
+| `MINIO_ACCESS_KEY` | Credencial MinIO |
+| `MINIO_SECRET_KEY` | Secreto MinIO |
+| `ADMIN_EMAIL` | Email del admin inicial |
+| `DOMAIN_NAME` | Tu dominio de producción |
 
 ### Checklist de Producción
-- [ ] Cambiar `JWT_SECRET` a uno seguro
-- [ ] Configurar CORS a dominio específico
-- [ ] Usar HTTPS (configurar Traefik/nginx)
-- [ ] Configurar backups de base de datos
-- [ ] Implementar rate limiting
-- [ ] Configurar monitoreo (logs, métricas)
-- [ ] Configurar certificados SSL
+- [x] Variables generadas con `setup:project`
+- [ ] Traefik configurado con certificados SSL
+- [ ] MinIO accesible desde `MINIO_ENDPOINT`
+- [ ] PostgreSQL accesible desde `DB_HOST`
+- [ ] DNS configurado para `DOMAIN_NAME` y `api.DOMAIN_NAME`
 
 ## 📚 Recursos Adicionales
 
@@ -351,6 +375,14 @@ Para contribuir al proyecto:
 
 ## 📝 Changelog
 
+### v1.2 (2026-01-11)
+- ✅ Implementado **Setup Wizard** (`npm run setup:project`)
+- ✅ Generación automática de `portainer.env` para despliegue en Portainer
+- ✅ Auditoría de seguridad: Helmet, Rate Limiting, XSS Prevention
+- ✅ Mejoras UX en Admin Panel (contraste dark mode)
+- ✅ Actualizado `docker-compose.prod.yml` para Portainer
+- ✅ Creado `.env.example` como template
+
 ### v1.1 (2026-01-08)
 - ✅ Implementado flujo "Olvidé mi Contraseña"
 - ✅ Implementado flujo "Cambio de Email"
@@ -371,6 +403,6 @@ Para contribuir al proyecto:
 
 ---
 
-**Última Actualización:** 2026-01-08  
-**Versión:** 1.1  
+**Última Actualización:** 2026-01-11  
+**Versión:** 1.2  
 **Mantenedor:** desarrollo@tuempresa.com

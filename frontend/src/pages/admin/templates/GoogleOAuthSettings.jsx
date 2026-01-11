@@ -2,10 +2,10 @@ import React from 'react';
 
 const GoogleOAuthSettings = ({ settings, handleSettingsChange, handleSaveSettings, settingsSaving, error, success }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Autenticación con Google</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Autenticación con Google</h3>
                     <p className="text-sm text-gray-500">Configura las credenciales de OAuth 2.0 para permitir inicio de sesión con Google.</p>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -29,7 +29,7 @@ const GoogleOAuthSettings = ({ settings, handleSettingsChange, handleSaveSetting
 
             <div className={`space-y-4 ${!settings.oauth_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client ID</label>
                     <input
                         type="text"
                         value={settings.oauth_client_id}
@@ -41,7 +41,7 @@ const GoogleOAuthSettings = ({ settings, handleSettingsChange, handleSaveSetting
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret (Opcional)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Secret (Opcional)</label>
                     <input
                         type="password"
                         value={settings.oauth_client_secret}
