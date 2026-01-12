@@ -16,6 +16,7 @@ const GeneralTab = () => {
         app_favicon_url: '',
         app_version: '',
         footer_text: '',
+        support_email: '',
         rate_limit_avatar_enabled: true,
         rate_limit_password_enabled: true,
         rate_limit_login_enabled: true
@@ -41,6 +42,7 @@ const GeneralTab = () => {
                     app_favicon_url: data.app_favicon_url || '',
                     app_version: data.app_version || '',
                     footer_text: data.footer_text || '',
+                    support_email: data.support_email || '',
                     rate_limit_avatar_enabled: data.rate_limit_avatar_enabled !== false,
                     rate_limit_password_enabled: data.rate_limit_password_enabled !== false,
                     rate_limit_login_enabled: data.rate_limit_login_enabled !== false
@@ -65,6 +67,7 @@ const GeneralTab = () => {
             app_favicon_url: settings.app_favicon_url,
             app_version: settings.app_version,
             footer_text: settings.footer_text,
+            support_email: settings.support_email,
             rate_limit_avatar_enabled: settings.rate_limit_avatar_enabled,
             rate_limit_password_enabled: settings.rate_limit_password_enabled,
             rate_limit_login_enabled: settings.rate_limit_login_enabled
@@ -151,21 +154,33 @@ const GeneralTab = () => {
                         value={settings.app_name}
                         onChange={(e) => setSettings({ ...settings, app_name: e.target.value })}
                         placeholder="Mi Aplicación"
-                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                     />
                     <p className="mt-1 text-xs text-gray-500">Nombre visible en el navegador y correos.</p>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Empresa</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la Empresa</label>
                     <input
                         type="text"
                         value={settings.company_name}
                         onChange={(e) => setSettings({ ...settings, company_name: e.target.value })}
                         placeholder="Mi Empresa S.A."
-                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                     />
-                    <p className="mt-1 text-xs text-gray-500">Usado en plantillas legales (Términos y Privacidad).</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Usado en plantillas legales y variables (%EMPRESA_NAME%).</p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email de Soporte</label>
+                    <input
+                        type="email"
+                        value={settings.support_email}
+                        onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+                        placeholder="soporte@miempresa.com"
+                        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Email de contacto para soporte (%SUPPORT_EMAIL%).</p>
                 </div>
 
                 <div>
@@ -180,7 +195,7 @@ const GeneralTab = () => {
                         </div>
                         <div className="flex flex-col gap-2">
                             <div className="flex gap-2">
-                                <label className="cursor-pointer bg-[#008a60] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#007a55]">
+                                <label className="cursor-pointer bg-[#008a60] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#007a55] transition-colors">
                                     Subir Imagen
                                     <input type="file" className="hidden" accept="image/*" onChange={handleFaviconUpload} />
                                 </label>
@@ -206,7 +221,7 @@ const GeneralTab = () => {
                             value={settings.app_version}
                             onChange={(e) => setSettings({ ...settings, app_version: e.target.value })}
                             placeholder="1.0.0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                     </div>
                 </div>
@@ -218,7 +233,7 @@ const GeneralTab = () => {
                         onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
                         placeholder="© 2024 Mi Aplicación. Todos los derechos reservados."
                         rows="2"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                     />
                 </div>
 
@@ -239,7 +254,7 @@ const GeneralTab = () => {
                             <button
                                 type="button"
                                 onClick={() => setSettings(prev => ({ ...prev, rate_limit_avatar_enabled: !prev.rate_limit_avatar_enabled }))}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_avatar_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_avatar_enabled ? 'bg-[#008a60]' : 'bg-gray-200 dark:bg-slate-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_avatar_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
@@ -253,7 +268,7 @@ const GeneralTab = () => {
                             <button
                                 type="button"
                                 onClick={() => setSettings(prev => ({ ...prev, rate_limit_password_enabled: !prev.rate_limit_password_enabled }))}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_password_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_password_enabled ? 'bg-[#008a60]' : 'bg-gray-200 dark:bg-slate-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_password_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
@@ -267,7 +282,7 @@ const GeneralTab = () => {
                             <button
                                 type="button"
                                 onClick={() => setSettings(prev => ({ ...prev, rate_limit_login_enabled: !prev.rate_limit_login_enabled }))}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_login_enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.rate_limit_login_enabled ? 'bg-[#008a60]' : 'bg-gray-200 dark:bg-slate-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.rate_limit_login_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
@@ -279,7 +294,7 @@ const GeneralTab = () => {
                     <button
                         onClick={handleSaveSettings}
                         disabled={settingsSaving}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
+                        className="px-6 py-2 bg-[#008a60] text-white rounded-lg font-medium hover:bg-[#007a55] disabled:opacity-50 transition-colors shadow-sm"
                     >
                         {settingsSaving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>

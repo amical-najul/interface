@@ -10,7 +10,7 @@ const pool = require('../config/db');
 const getSmtpConfig = async () => {
     const keys = [
         'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
-        'app_name', 'app_favicon_url'
+        'app_name', 'company_name', 'support_email', 'app_favicon_url'
     ];
     const result = await pool.query(
         'SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)',
@@ -26,6 +26,8 @@ const getSmtpConfig = async () => {
         smtp_pass: '',
         smtp_secure: 'tls',
         app_name: 'Mi Aplicación',
+        company_name: '',
+        support_email: '',
         app_favicon_url: ''
     };
 
@@ -55,6 +57,12 @@ const getSmtpConfig = async () => {
             case 'app_name':
                 config.app_name = row.setting_value;
                 break;
+            case 'company_name':
+                config.company_name = row.setting_value;
+                break;
+            case 'support_email':
+                config.support_email = row.setting_value;
+                break;
             case 'app_favicon_url':
                 config.app_favicon_url = row.setting_value;
                 break;
@@ -77,9 +85,14 @@ const getTemplate = async (templateKey) => {
 const replacePlaceholders = (text, data) => {
     if (!text) return '';
     const appName = data.appName || 'Mi Aplicación';
+    const companyName = data.companyName || appName;
+    const supportEmail = data.supportEmail || data.email; // Fallback to user email if no support email? Maybe empty string
+
     return text
         .replace(/%DISPLAY_NAME%/g, data.displayName || '')
         .replace(/%APP_NAME%/g, appName)
+        .replace(/%EMPRESA_NAME%/g, companyName)
+        .replace(/%SUPPORT_EMAIL%/g, supportEmail)
         .replace(/%LINK%/g, data.link || '')
         .replace(/%EMAIL%/g, data.email || '')
         .replace(/%NEW_EMAIL%/g, data.newEmail || '');
@@ -138,7 +151,9 @@ const sendAuthEmail = async (templateKey, recipient, data) => {
             email: recipient.email,
             link: data.link,
             newEmail: data.newEmail,
-            appName: data.appName || smtpConfig.app_name || 'Mi Aplicación'
+            appName: data.appName || smtpConfig.app_name || 'Mi Aplicación',
+            companyName: smtpConfig.company_name || smtpConfig.app_name || 'Mi Empresa',
+            supportEmail: smtpConfig.support_email || 'support@example.com'
         };
 
         const subject = replacePlaceholders(template.subject, placeholderData);

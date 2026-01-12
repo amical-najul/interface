@@ -22,6 +22,8 @@ export const TEMPLATES_CONFIG = [
 export const PLACEHOLDERS = [
     { var: '%DISPLAY_NAME%', desc: 'Nombre del usuario' },
     { var: '%APP_NAME%', desc: 'Nombre de la aplicación' },
+    { var: '%EMPRESA_NAME%', desc: 'Nombre de la empresa' },
+    { var: '%SUPPORT_EMAIL%', desc: 'Email de soporte' },
     { var: '%LINK%', desc: 'URL de acción (verificar/reset)' },
     { var: '%EMAIL%', desc: 'Correo electrónico del usuario' },
     { var: '%NEW_EMAIL%', desc: 'Nuevo correo (solo cambio de email)' },

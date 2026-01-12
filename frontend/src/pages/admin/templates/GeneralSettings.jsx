@@ -24,6 +24,30 @@ const GeneralSettings = ({ settings, handleSettingsChange, handleFaviconUpload, 
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la Empresa</label>
+                        <input
+                            type="text"
+                            value={settings.company_name || ''}
+                            onChange={(e) => handleSettingsChange('company_name', e.target.value)}
+                            placeholder="Mi Empresa S.A."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60]"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Este nombre se usará en variables de plantillas (%EMPRESA_NAME%).</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email de Soporte</label>
+                        <input
+                            type="email"
+                            value={settings.support_email || ''}
+                            onChange={(e) => handleSettingsChange('support_email', e.target.value)}
+                            placeholder="soporte@miempresa.com"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#008a60] focus:border-[#008a60]"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Este email se usará en variables de plantillas (%SUPPORT_EMAIL%).</p>
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Favicon del Proyecto</label>
                         <div className="flex items-start gap-4">
                             <div className="w-16 h-16 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative group">

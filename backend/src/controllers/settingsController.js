@@ -5,7 +5,7 @@ exports.getSmtpSettings = async (req, res) => {
     try {
         const keys = [
             'smtp_enabled', 'smtp_sender_email', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure',
-            'app_name', 'company_name', 'app_favicon_url', 'app_version', 'footer_text',
+            'app_name', 'company_name', 'support_email', 'app_favicon_url', 'app_version', 'footer_text',
             'llm_provider', 'llm_model', 'llm_api_key',
             'llm_provider_secondary', 'llm_model_secondary', 'llm_api_key_secondary',
             'rate_limit_avatar_enabled', 'rate_limit_password_enabled', 'rate_limit_login_enabled',
@@ -26,6 +26,7 @@ exports.getSmtpSettings = async (req, res) => {
             smtp_secure: 'tls',
             app_name: process.env.VITE_APP_NAME,
             company_name: '',
+            support_email: '',
             app_favicon_url: process.env.VITE_APP_FAVICON_URL,
             app_version: '1.0.0',
             footer_text: '© 2024 Mi Aplicación. Todos los derechos reservados.',
@@ -72,6 +73,9 @@ exports.getSmtpSettings = async (req, res) => {
                     break;
                 case 'company_name':
                     settings.company_name = row.setting_value;
+                    break;
+                case 'support_email':
+                    settings.support_email = row.setting_value;
                     break;
                 case 'app_favicon_url':
                     settings.app_favicon_url = row.setting_value;
@@ -129,7 +133,7 @@ exports.getSmtpSettings = async (req, res) => {
 exports.updateSmtpSettings = async (req, res) => {
     const {
         enabled, sender_email, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure,
-        app_name, company_name, app_favicon_url, app_version, footer_text,
+        app_name, company_name, support_email, app_favicon_url, app_version, footer_text,
         terms_content, privacy_content,
         llm_provider, llm_model, llm_api_key,
         llm_provider_secondary, llm_model_secondary, llm_api_key_secondary,
@@ -161,6 +165,7 @@ exports.updateSmtpSettings = async (req, res) => {
         if (smtp_secure !== undefined) await upsert('smtp_secure', smtp_secure);
         if (app_name !== undefined) await upsert('app_name', app_name);
         if (company_name !== undefined) await upsert('company_name', company_name);
+        if (support_email !== undefined) await upsert('support_email', support_email);
         if (app_favicon_url !== undefined) await upsert('app_favicon_url', app_favicon_url);
         if (app_version !== undefined) await upsert('app_version', app_version);
         if (footer_text !== undefined) await upsert('footer_text', footer_text);

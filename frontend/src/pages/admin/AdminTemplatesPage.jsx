@@ -37,6 +37,8 @@ const AdminTemplatesPage = () => {
         smtp_pass: '',
         smtp_secure: 'tls',
         app_name: '',
+        company_name: '',
+        support_email: '',
         app_favicon_url: '',
         // OAuth settings
         oauth_enabled: false,

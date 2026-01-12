@@ -113,6 +113,8 @@ const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, hand
                             {formData.body_html
                                 .replace(/%DISPLAY_NAME%/g, 'Juan Pérez')
                                 .replace(/%APP_NAME%/g, settings.app_name || 'Mi Aplicación')
+                                .replace(/%EMPRESA_NAME%/g, settings.company_name || 'Mi Empresa')
+                                .replace(/%SUPPORT_EMAIL%/g, settings.support_email || 'soporte@example.com')
                                 .replace(/%EMAIL%/g, 'juan@example.com')
                                 .replace(/%NEW_EMAIL%/g, 'nuevo@example.com')
                                 .replace(/%LINK%/g, 'https://app.example.com/action?mode=verify&code=abc123')
