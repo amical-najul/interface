@@ -67,7 +67,7 @@ services:
       context: ${WEB_BUILD_CONTEXT}
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://api.${DOMAIN_NAME}
+        - VITE_API_URL=https://api.${DOMAIN_NAME}/api
         - VITE_APP_NAME=${VITE_APP_NAME}
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
         - VITE_GOOGLE_AUTH_ENABLED=${VITE_GOOGLE_AUTH_ENABLED:-false}
