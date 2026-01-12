@@ -338,32 +338,32 @@ const AdminUsersPage = () => {
             {/* Create/Edit Modal */}
             {modalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform scale-100 animate-in zoom-in-95 duration-200">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 transform scale-100 animate-in zoom-in-95 duration-200">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Email</label>
-                                <input name="email" type="email" defaultValue={editingUser?.email} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input name="email" type="email" defaultValue={editingUser?.email} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Nombre</label>
-                                <input name="name" type="text" defaultValue={editingUser?.name} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+                                <input name="name" type="text" defaultValue={editingUser?.name} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Contraseña {editingUser && '(Dejar vacío para no cambiar)'}</label>
-                                <input name="password" type="password" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña {editingUser && '(Dejar vacío para no cambiar)'}</label>
+                                <input name="password" type="password" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60] transition-shadow" />
                             </div>
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700">Rol</label>
-                                    <select name="role" defaultValue={editingUser?.role || 'user'} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60]">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Rol</label>
+                                    <select name="role" defaultValue={editingUser?.role || 'user'} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60]">
                                         <option value="user">Usuario</option>
                                         <option value="admin">Administrador</option>
                                     </select>
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700">Estado</label>
-                                    <select name="status" defaultValue={editingUser?.status || (editingUser?.active ? 'active' : 'inactive')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60]">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                                    <select name="status" defaultValue={editingUser?.status || (editingUser?.active ? 'active' : 'inactive')} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-[#008a60] focus:border-[#008a60]">
                                         <option value="active">Activo</option>
                                         <option value="inactive">Inactivo</option>
                                         <option value="deleted">Eliminado</option>
@@ -374,7 +374,7 @@ const AdminUsersPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
                                     disabled={saveStatus === 'success' || saveStatus === 'saving'}
                                 >
                                     Cancelar

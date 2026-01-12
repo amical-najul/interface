@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PasswordInput from '../components/PasswordInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
@@ -17,7 +17,6 @@ function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const verificationAttempted = useRef(false);
 
     // Alert State
     const [alertData, setAlertData] = useState({
@@ -43,9 +42,14 @@ function LoginPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const token = params.get('token') || params.get('verify');
-        if (token && !verificationAttempted.current) {
-            verificationAttempted.current = true;
-            verifyEmail(token);
+
+        // Use sessionStorage to prevent double-execution even across remounts
+        if (token) {
+            const tokenKey = `verify_attempt_${token}`;
+            if (!sessionStorage.getItem(tokenKey)) {
+                sessionStorage.setItem(tokenKey, 'true');
+                verifyEmail(token);
+            }
         }
 
         // Check if already logged in
