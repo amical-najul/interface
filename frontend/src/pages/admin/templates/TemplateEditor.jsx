@@ -107,7 +107,14 @@ const TemplateEditor = ({ selectedTemplate, formData, handleChange, saving, hand
                         <div className="border-b pb-3 mb-3">
                             <p className="text-xs text-gray-500">De: {formData.sender_name || 'Remitente'} &lt;{formData.sender_email || 'email@example.com'}&gt;</p>
                             <p className="text-xs text-gray-500">Responder a: {formData.reply_to || 'noreply'}</p>
-                            <p className="text-sm font-semibold mt-2">{formData.subject || 'Sin asunto'}</p>
+                            <p className="text-sm font-semibold mt-2">
+                                {(formData.subject || 'Sin asunto')
+                                    .replace(/%DISPLAY_NAME%/g, 'Juan Pérez')
+                                    .replace(/%APP_NAME%/g, settings.app_name || 'Mi Aplicación')
+                                    .replace(/%EMPRESA_NAME%/g, settings.company_name || 'Mi Empresa')
+                                    .replace(/%SUPPORT_EMAIL%/g, settings.support_email || 'soporte@example.com')
+                                }
+                            </p>
                         </div>
                         <div className="whitespace-pre-wrap text-sm text-gray-700">
                             {formData.body_html

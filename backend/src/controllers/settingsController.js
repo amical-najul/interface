@@ -350,17 +350,19 @@ exports.getLegalContent = async (req, res) => {
         // Fetch legal content along with branding info for variable replacement
         const result = await pool.query(
             `SELECT setting_key, setting_value FROM app_settings WHERE setting_key = ANY($1)`,
-            [[key, 'app_name', 'company_name']]
+            [[key, 'app_name', 'company_name', 'support_email']]
         );
 
         let content = '';
         let appName = process.env.VITE_APP_NAME || 'Mi Aplicación';
         let companyName = '';
+        let supportEmail = process.env.VITE_SUPPORT_EMAIL || 'soporte@ejemplo.com';
 
         result.rows.forEach(row => {
             if (row.setting_key === key) content = row.setting_value || '';
             if (row.setting_key === 'app_name') appName = row.setting_value || appName;
             if (row.setting_key === 'company_name') companyName = row.setting_value || '';
+            if (row.setting_key === 'support_email') supportEmail = row.setting_value || supportEmail;
         });
 
         if (!content) {
@@ -374,6 +376,8 @@ exports.getLegalContent = async (req, res) => {
         content = content
             .replace(/%APP_NAME%/g, appName)
             .replace(/%COMPANY_NAME%/g, companyName)
+            .replace(/%EMPRESA_NAME%/g, companyName)
+            .replace(/%SUPPORT_EMAIL%/g, supportEmail)
             .replace(/\[Nombre de tu App\]/g, appName)
             .replace(/\[Nombre de tu Empresa o Desarrollador\]/g, companyName);
 

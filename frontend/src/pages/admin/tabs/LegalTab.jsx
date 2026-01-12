@@ -81,6 +81,25 @@ const LegalTab = () => {
             {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
             {success && <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm">{success}</div>}
 
+            {/* Variables Info Box */}
+            <div className="mb-6 bg-blue-50 dark:bg-slate-700/50 p-4 rounded-lg border border-blue-100 dark:border-slate-600">
+                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Variables Dinámicas Disponibles:</h4>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                        <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-blue-200 dark:border-slate-600">%APP_NAME%</code>
+                        <span>→ Nombre de la Aplicación</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-blue-200 dark:border-slate-600">%EMPRESA_NAME%</code>
+                        <span>→ Nombre de la Empresa</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-blue-200 dark:border-slate-600">%SUPPORT_EMAIL%</code>
+                        <span>→ Email de Soporte</span>
+                    </li>
+                </ul>
+            </div>
+
             <div className="space-y-8">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Términos y Condiciones</label>

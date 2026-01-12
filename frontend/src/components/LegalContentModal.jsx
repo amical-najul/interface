@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
-import DOMPurify from 'dompurify';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -73,10 +74,11 @@ const LegalContentModal = ({ isOpen, onClose, type }) => {
                 )}
 
                 {!loading && !error && (
-                    <div
-                        className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
-                    />
+                    <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {content}
+                        </ReactMarkdown>
+                    </div>
                 )}
             </div>
         </div>
