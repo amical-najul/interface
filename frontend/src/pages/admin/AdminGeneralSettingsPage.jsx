@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Layout, Mail, Shield, Bot, FileText } from 'lucide-react';
+import { Layout, Mail, Shield, Bot, FileText, Database } from 'lucide-react';
 import GeneralTab from './tabs/GeneralTab';
 import SmtpTab from './tabs/SmtpTab';
 import SecurityTab from './tabs/SecurityTab';
 import AiTab from './tabs/AiTab';
 import LegalTab from './tabs/LegalTab';
+import StorageTab from './tabs/StorageTab';
 
 const AdminGeneralSettingsPage = () => {
     const [activeTab, setActiveTab] = useState('general');
@@ -15,6 +16,7 @@ const AdminGeneralSettingsPage = () => {
         { id: 'security', label: 'Seguridad', icon: Shield },
         { id: 'ai', label: 'Inteligencia Artificial', icon: Bot },
         { id: 'legal', label: 'Legales', icon: FileText },
+        { id: 'storage', label: 'Almacenamiento', icon: Database },
     ];
 
     return (
@@ -51,6 +53,7 @@ const AdminGeneralSettingsPage = () => {
                     {activeTab === 'security' && <SecurityTab />}
                     {activeTab === 'ai' && <AiTab />}
                     {activeTab === 'legal' && <LegalTab />}
+                    {activeTab === 'storage' && <StorageTab />}
                 </div>
             </div>
         </div>

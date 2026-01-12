@@ -6,6 +6,7 @@ const auth = require('../middleware/authMiddleware');
 const admin = require('../middleware/adminMiddleware');
 
 // Maintenance Routes
+router.post('/maintenance/analysis', auth, admin, maintenanceController.analyzeOrphanedFiles);
 router.post('/maintenance/cleanup', auth, admin, maintenanceController.cleanupOrphanedFiles);
 
 const advancedSettingsController = require('../controllers/advancedSettingsController');

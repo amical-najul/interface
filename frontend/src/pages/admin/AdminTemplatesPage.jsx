@@ -5,7 +5,6 @@ import SmtpSettings from './templates/SmtpSettings';
 import GoogleOAuthSettings from './templates/GoogleOAuthSettings';
 import TemplateList from './templates/TemplateList';
 import TemplateEditor from './templates/TemplateEditor';
-import StorageTab from './tabs/StorageTab';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminTemplatesPage = () => {
@@ -330,15 +329,6 @@ El equipo de %APP_NAME%`;
                 >
                     Configuración SMTP
                 </button>
-                <button
-                    onClick={() => { setActiveTab('storage'); setEditMode(false); }}
-                    className={`pb-3 px-1 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'storage'
-                        ? 'text-[#008a60] border-[#008a60]'
-                        : 'text-gray-500 border-transparent hover:text-gray-700'
-                        }`}
-                >
-                    Almacenamiento
-                </button>
             </div>
 
             {loading ? (
@@ -370,8 +360,6 @@ El equipo de %APP_NAME%`;
                     error={error}
                     success={success}
                 />
-            ) : activeTab === 'storage' ? (
-                <StorageTab />
             ) : editMode ? (
                 <TemplateEditor
                     selectedTemplate={selectedTemplate}
