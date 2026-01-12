@@ -84,7 +84,7 @@ function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-inter">
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-inter light-forced">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
                 <div className="p-8">
                     <div className="text-center mb-8">

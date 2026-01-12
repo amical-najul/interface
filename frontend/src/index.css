@@ -178,6 +178,53 @@ video {
   /* Slate-200 */
 }
 
+/* FORCED LIGHT MODE (Para Login y páginas públicas) */
+.light-forced {
+  background-color: #f3f4f6 !important;
+  /* bg-gray-100 */
+  color: #111827 !important;
+  /* text-gray-900 */
+}
+
+.light-forced .bg-white {
+  background-color: #ffffff !important;
+}
+
+.light-forced input,
+.light-forced textarea,
+.light-forced select {
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
+}
+
+.light-forced input::placeholder {
+  color: #9ca3af !important;
+  /* text-gray-400 */
+}
+
+.light-forced label {
+  color: #4b5563 !important;
+  /* text-gray-600 */
+}
+
+.light-forced p,
+.light-forced h1,
+.light-forced h2,
+.light-forced span:not(.flex-shrink-0) {
+  color: #111827 !important;
+}
+
+.light-forced .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.light-forced .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
