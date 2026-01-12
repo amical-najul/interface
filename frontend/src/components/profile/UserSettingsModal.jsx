@@ -219,13 +219,13 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                 <div className="flex items-center gap-6">
                                     <div className="relative group">
                                         <div
-                                            className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg cursor-pointer relative"
+                                            className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-slate-700 border-4 border-white dark:border-gray-800 shadow-lg cursor-pointer relative"
                                             onClick={handleAvatarClick}
                                         >
                                             {user?.avatar_url ? (
                                                 <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover transition-opacity group-hover:opacity-75" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400 group-hover:bg-gray-200 transition-colors">
+                                                <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400 dark:text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-slate-600 transition-colors">
                                                     {user?.name?.charAt(0) || user?.email?.charAt(0)}
                                                 </div>
                                             )}
@@ -260,8 +260,8 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-lg text-gray-900">{user?.name || 'Usuario'}</h3>
-                                        <p className="text-gray-500 text-sm">{user?.email}</p>
+                                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{user?.name || 'Usuario'}</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 text-sm">{user?.email}</p>
                                         <button
                                             type="button"
                                             onClick={handleAvatarClick}
@@ -274,7 +274,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
                                 <div className="grid gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.name_label')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.profile.name_label')}</label>
                                         <input
                                             type="text"
                                             value={profileData.name}
@@ -283,7 +283,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.email_label')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.profile.email_label')}</label>
                                         <input
                                             type="email"
                                             value={profileData.email}
@@ -307,50 +307,50 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                         )}
 
                         {activeTab === 'security' && (
-                            <div className="space-y-8">
-                                <form onSubmit={handlePasswordChange} className="space-y-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t('settings.security.change_password')}</h3>
+                            <div className="space-y-5">
+                                <form onSubmit={handlePasswordChange} className="space-y-4">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b dark:border-gray-700 pb-2">{t('settings.security.change_password')}</h3>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.current_password')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.security.current_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.currentPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
+                                            onChange={(e) => { setPasswordData({ ...passwordData, currentPassword: e.target.value }); setMessage({ type: '', text: '' }); }}
+                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.new_password')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.security.new_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.newPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
+                                            onChange={(e) => { setPasswordData({ ...passwordData, newPassword: e.target.value }); setMessage({ type: '', text: '' }); }}
+                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.security.confirm_password')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.security.confirm_password')}</label>
                                         <input
                                             type="password"
                                             value={passwordData.confirmPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
+                                            onChange={(e) => { setPasswordData({ ...passwordData, confirmPassword: e.target.value }); setMessage({ type: '', text: '' }); }}
+                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#008a60] focus:border-transparent text-base"
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition-colors disabled:opacity-50 text-base"
+                                        className="w-full sm:w-auto px-6 py-2.5 bg-[#008a60] text-white rounded-lg font-medium hover:bg-[#00704e] transition-colors disabled:opacity-50 text-base shadow-sm"
                                     >
                                         {isLoading ? t('settings.security.updating') : t('settings.security.update_btn')}
                                     </button>
                                 </form>
 
-                                <div className="pt-6 border-t border-gray-100">
-                                    <h3 className="text-lg font-semibold text-red-600 border-b border-red-100 pb-2 mb-4">Zona de Peligro</h3>
-                                    <div className="bg-red-50 p-6 rounded-xl border border-red-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <h3 className="text-lg font-semibold text-red-600 border-b border-red-100 dark:border-red-900/30 pb-2 mb-3">Zona de Peligro</h3>
+                                    <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div>
                                             <h4 className="font-semibold text-red-800">{t('settings.security.delete_account')}</h4>
                                             <p className="text-sm text-red-600 mt-1">{t('settings.security.delete_warning')}</p>
@@ -368,10 +368,10 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
                         {activeTab === 'preferences' && (
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
                                     <div>
-                                        <h3 className="font-medium text-gray-900">{t('settings.darkMode')}</h3>
-                                        <p className="text-sm text-gray-500">{t('settings.darkMode_desc')}</p>
+                                        <h3 className="font-medium text-gray-900 dark:text-white">{t('settings.darkMode')}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.darkMode_desc')}</p>
                                     </div>
                                     <button
                                         onClick={toggleTheme}
@@ -403,15 +403,15 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
 
                         {activeTab === 'info' && (
                             <div className="space-y-6 text-center py-8">
-                                <div className="w-16 h-16 bg-gray-100 rounded-2xl mx-auto flex items-center justify-center mb-4 overflow-hidden">
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl mx-auto flex items-center justify-center mb-4 overflow-hidden">
                                     {appFaviconUrl ? (
                                         <img src={appFaviconUrl} alt="App Logo" className="w-full h-full object-contain p-2" />
                                     ) : (
                                         <span className="text-4xl">🚀</span>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900">{appName || 'Mi Aplicación'}</h3>
-                                <p className="text-gray-500">Versión {appVersion || '1.0.0'}</p>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{appName || 'Mi Aplicación'}</h3>
+                                <p className="text-gray-500 dark:text-gray-400">Versión {appVersion || '1.0.0'}</p>
 
                                 <div className="flex justify-center gap-4 mt-8">
                                     <button
@@ -420,7 +420,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                     >
                                         {t('settings.info.terms')}
                                     </button>
-                                    <span className="text-gray-300">|</span>
+                                    <span className="text-gray-300 dark:text-gray-600">|</span>
                                     <button
                                         onClick={() => setLegalModal({ isOpen: true, type: 'privacy' })}
                                         className="text-[#008a60] hover:underline text-sm"
@@ -429,7 +429,7 @@ const UserSettingsModal = ({ isOpen, onClose }) => {
                                     </button>
                                 </div>
 
-                                <div className="mt-12 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm inline-block">
+                                <div className="mt-12 p-4 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 rounded-lg text-sm inline-block">
                                     {footerText || `© 2024 ${appName || 'Mi Aplicación'}. ${t('settings.info.footer')}`}
                                 </div>
                             </div>
