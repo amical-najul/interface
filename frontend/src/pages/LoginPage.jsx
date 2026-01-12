@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PasswordInput from '../components/PasswordInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
@@ -17,6 +17,7 @@ function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const verificationAttempted = useRef(false);
 
     // Alert State
     const [alertData, setAlertData] = useState({
@@ -42,7 +43,8 @@ function LoginPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const token = params.get('token') || params.get('verify');
-        if (token) {
+        if (token && !verificationAttempted.current) {
+            verificationAttempted.current = true;
             verifyEmail(token);
         }
 
@@ -104,6 +106,20 @@ function LoginPage() {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+
+        // Client-side validation for registration
+        if (!isLogin) {
+            if (password.length < 8) {
+                setError('La contraseña debe tener al menos 8 caracteres.');
+                setIsLoading(false);
+                return;
+            }
+            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+                setError('La contraseña debe contener al menos una mayúscula, una minúscula y un número.');
+                setIsLoading(false);
+                return;
+            }
+        }
 
         try {
             if (isLogin) {

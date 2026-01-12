@@ -17,6 +17,14 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'El usuario ya existe' });
         }
 
+        // Validate password strength
+        if (password.length < 8) {
+            return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
+        }
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+            return res.status(400).json({ message: 'La contraseña debe contener mayúsculas, minúsculas y un número' });
+        }
+
         // Hash contraseña
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
