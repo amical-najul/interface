@@ -343,6 +343,25 @@ exports.uploadAvatar = async (req, res) => {
             await minioClient.makeBucket(bucketName, 'us-east-1');
         }
 
+        // Enforce Public Read Policy (Idempotent-ish)
+        const policy = {
+            Version: '2012-10-17',
+            Statement: [
+                {
+                    Effect: 'Allow',
+                    Principal: { AWS: ['*'] },
+                    Action: ['s3:GetObject'],
+                    Resource: [`arn:aws:s3:::${bucketName}/*`] // Allow read for all objects in bucket
+                }
+            ]
+        };
+        try {
+            await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
+            console.log('DEBUG: Set public policy for bucket:', bucketName);
+        } catch (policyErr) {
+            console.warn('WARNING: Failed to set bucket policy:', policyErr.message);
+        }
+
         // Upload to MinIO
         console.log('DEBUG: Uploading to MinIO:', objectName);
         await minioClient.putObject(bucketName, objectName, compressedBuffer, { 'Content-Type': 'image/webp' });
@@ -358,6 +377,7 @@ exports.uploadAvatar = async (req, res) => {
         // If standard ports, don't show port in URL
         const portStr = (port === '80' || port === '443') ? '' : `:${port}`;
         const url = `${protocol}://${publicEndpoint}${portStr}/${bucketName}/${objectName}`;
+        console.log('DEBUG: Generated Avatar URL:', url);
 
         await client.query('BEGIN');
 
