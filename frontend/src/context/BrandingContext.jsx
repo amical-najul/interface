@@ -42,13 +42,21 @@ export const BrandingProvider = ({ children }) => {
             document.title = branding.appName;
         }
         if (branding.appFaviconUrl) {
-            let link = document.querySelector("link[rel~='icon']");
-            if (!link) {
-                link = document.createElement('link');
-                link.rel = 'icon';
-                document.getElementsByTagName('head')[0].appendChild(link);
-            }
+            // Remove ANY existing icon or apple-touch-icon
+            const existingIcons = document.querySelectorAll("link[rel*='icon']");
+            existingIcons.forEach(icon => icon.parentNode.removeChild(icon));
+
+            // Create new standard favicon
+            const link = document.createElement('link');
+            link.rel = 'icon';
             link.href = branding.appFaviconUrl;
+            document.getElementsByTagName('head')[0].appendChild(link);
+
+            // Also update apple-touch-icon for mobile
+            const appleLink = document.createElement('link');
+            appleLink.rel = 'apple-touch-icon';
+            appleLink.href = branding.appFaviconUrl;
+            document.getElementsByTagName('head')[0].appendChild(appleLink);
         }
     }, [branding.appName, branding.appFaviconUrl]);
 

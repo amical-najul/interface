@@ -5,6 +5,7 @@ import SmtpSettings from './templates/SmtpSettings';
 import GoogleOAuthSettings from './templates/GoogleOAuthSettings';
 import TemplateList from './templates/TemplateList';
 import TemplateEditor from './templates/TemplateEditor';
+import StorageTab from './tabs/StorageTab';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminTemplatesPage = () => {
@@ -274,33 +275,7 @@ El equipo de %APP_NAME%`;
         }
     };
 
-    const handleFaviconUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
 
-        const formData = new FormData();
-        formData.append('avatar', file); // API expects 'avatar' key for MinIO uploads for now
-
-        setSettingsSaving(true);
-        try {
-            const res = await fetch(`${API_URL}/users/avatar`, { // Re-using avatar upload endpoint
-                method: 'POST',
-                headers: { 'x-auth-token': token },
-                body: formData
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setSettings(prev => ({ ...prev, app_favicon_url: data.avatar_url }));
-                setSuccess('Favicon subido. Recuerda guardar los cambios.');
-            } else {
-                setError(data.message || 'Error al subir favicon');
-            }
-        } catch (err) {
-            setError('Error de conexión');
-        } finally {
-            setSettingsSaving(false);
-        }
-    };
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -355,6 +330,15 @@ El equipo de %APP_NAME%`;
                 >
                     Configuración SMTP
                 </button>
+                <button
+                    onClick={() => { setActiveTab('storage'); setEditMode(false); }}
+                    className={`pb-3 px-1 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'storage'
+                        ? 'text-[#008a60] border-[#008a60]'
+                        : 'text-gray-500 border-transparent hover:text-gray-700'
+                        }`}
+                >
+                    Almacenamiento
+                </button>
             </div>
 
             {loading ? (
@@ -363,7 +347,6 @@ El equipo de %APP_NAME%`;
                 <GeneralSettings
                     settings={settings}
                     handleSettingsChange={handleSettingsChange}
-                    handleFaviconUpload={handleFaviconUpload}
                     handleSaveSettings={handleSaveSettings}
                     settingsSaving={settingsSaving}
                     error={error}
@@ -387,6 +370,8 @@ El equipo de %APP_NAME%`;
                     error={error}
                     success={success}
                 />
+            ) : activeTab === 'storage' ? (
+                <StorageTab />
             ) : editMode ? (
                 <TemplateEditor
                     selectedTemplate={selectedTemplate}

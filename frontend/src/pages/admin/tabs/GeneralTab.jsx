@@ -102,7 +102,7 @@ const GeneralTab = () => {
         if (!file) return;
 
         const formData = new FormData();
-        formData.append('avatar', file);
+        formData.append('favicon', file);
 
         setSettingsSaving(true);
         try {

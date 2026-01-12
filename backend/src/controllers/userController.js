@@ -148,20 +148,59 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// Admin: Delete User
+// Admin: Delete User (Hard Delete)
 exports.deleteUser = async (req, res) => {
     const { id } = req.params;
+    const client = await pool.connect();
+
     try {
         // Prevent admin from deleting themselves
         if (req.user.id === parseInt(id)) {
             return res.status(400).json({ message: 'No puedes eliminarte a ti mismo. Usa la opción de eliminar cuenta en tu perfil.' });
         }
 
-        await pool.query('DELETE FROM users WHERE id = $1', [id]);
-        res.json({ message: 'Usuario eliminado' });
+        const bucketName = process.env.MINIO_BUCKET_NAME;
+
+        // 1. Fetch all associated files to clean up MinIO
+        if (bucketName) {
+            const history = await client.query('SELECT avatar_url FROM avatar_history WHERE user_id = $1', [id]);
+            const current = await client.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
+
+            const filesToDelete = new Set();
+
+            // Helper to get object name from url
+            const getObjName = (url) => {
+                if (!url) return null;
+                const index = url.indexOf('/avatars/');
+                if (index !== -1) return url.substring(index + 1); // "avatars/xyz.webp"
+                return null;
+            };
+
+            history.rows.forEach(r => { const name = getObjName(r.avatar_url); if (name) filesToDelete.add(name); });
+            if (current.rows.length > 0) { const name = getObjName(current.rows[0].avatar_url); if (name) filesToDelete.add(name); }
+
+            // Delete files from MinIO
+            // We do this asynchronously or simply await loop. Since it's admin action, awaiting is safer to ensure clean state.
+            for (const objectName of filesToDelete) {
+                try {
+                    await minioClient.removeObject(bucketName, objectName);
+                    console.log('Deleted orphaned file:', objectName);
+                } catch (e) {
+                    console.warn(`Failed to delete object ${objectName} during user deletion:`, e.message);
+                }
+            }
+        }
+
+        // 2. Delete User (Cascades to avatar_history usually if FK set to CASCADE, but we explicitly handle file drift above)
+        // If your DB schema has ON DELETE CASCADE for avatar_history, the records go away.
+        await client.query('DELETE FROM users WHERE id = $1', [id]);
+
+        res.json({ message: 'Usuario y sus archivos eliminados correctamente' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error eliminando usuario' });
+    } finally {
+        client.release();
     }
 };
 
@@ -294,7 +333,7 @@ exports.uploadAvatar = async (req, res) => {
             });
         }
 
-        const objectName = `avatars/${userId}-${Date.now()}.webp`;
+        let objectName = `avatars/${userId}-${Date.now()}.webp`;
 
         // Ensure bucket exists
         console.log('DEBUG: Checking bucket existence:', bucketName);
@@ -369,6 +408,17 @@ exports.uploadAvatar = async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Error subiendo avatar:', err);
+
+        // Attempt Full Rollback: Delete file from MinIO since DB insert failed
+        if (bucketName && objectName) {
+            try {
+                console.log('Performing Rollback: Deleting orphaned MinIO file:', objectName);
+                await minioClient.removeObject(bucketName, objectName);
+            } catch (minioErr) {
+                console.error('CRITICAL: Failed to rollback MinIO file:', minioErr.message);
+            }
+        }
+
         res.status(500).json({ message: 'Error subiendo avatar', error: err.message });
     } finally {
         client.release();

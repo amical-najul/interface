@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const minioClient = require('../config/minio');
+const sharp = require('sharp');
 
 // Get SMTP & General settings
 exports.getSmtpSettings = async (req, res) => {
@@ -382,5 +384,62 @@ exports.getLegalContent = async (req, res) => {
     } catch (err) {
         console.error('Error fetching legal content:', err);
         res.status(500).json({ message: 'Error al obtener contenido legal' });
+    }
+};
+
+// Upload Favicon (Admin Only)
+exports.uploadFavicon = async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No se subió imagen' });
+    }
+
+    try {
+        const bucketName = process.env.MINIO_BUCKET_NAME;
+        if (!bucketName) throw new Error('MINIO_BUCKET_NAME not configured');
+
+        // Process image (favicon usually small, but keeping quality)
+        let compressedBuffer;
+        try {
+            compressedBuffer = await sharp(req.file.buffer)
+                .resize(128, 128, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .png() // PNG is better for favicons (transparency)
+                .toBuffer();
+        } catch (sharpError) {
+            console.error('Sharp processing error:', sharpError.message);
+            return res.status(400).json({ message: 'Error procesando imagen', error: sharpError.message });
+        }
+
+        const objectName = `system/app-favicon-${Date.now()}.png`;
+
+        // Ensure bucket exists
+        const exists = await minioClient.bucketExists(bucketName);
+        if (!exists) {
+            await minioClient.makeBucket(bucketName, 'us-east-1');
+        }
+
+        // Upload to MinIO
+        await minioClient.putObject(bucketName, objectName, compressedBuffer, { 'Content-Type': 'image/png' });
+
+        // Build URL
+        const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+        const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || 'localhost';
+        const port = process.env.MINIO_PORT;
+        const portStr = (port === '80' || port === '443') ? '' : `:${port}`;
+        const url = `${protocol}://${publicEndpoint}${portStr}/${bucketName}/${objectName}`;
+
+        // Save URL to app_settings
+        await pool.query(
+            `INSERT INTO app_settings (setting_key, setting_value, updated_at) 
+             VALUES ('app_favicon_url', $1, CURRENT_TIMESTAMP) 
+             ON CONFLICT (setting_key) 
+             DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP`,
+            [url]
+        );
+
+        res.json({ favicon_url: url });
+
+    } catch (err) {
+        console.error('Error uploading favicon:', err);
+        res.status(500).json({ message: 'Error subiendo favicon', error: err.message });
     }
 };

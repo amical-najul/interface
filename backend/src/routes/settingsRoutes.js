@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
+const maintenanceController = require('../controllers/maintenanceController');
 const auth = require('../middleware/authMiddleware');
 const admin = require('../middleware/adminMiddleware');
+
+// Maintenance Routes
+router.post('/maintenance/cleanup', auth, admin, maintenanceController.cleanupOrphanedFiles);
+
 const advancedSettingsController = require('../controllers/advancedSettingsController');
 
 // SMTP settings (admin only)
@@ -28,5 +33,10 @@ router.put('/ai', auth, admin, advancedSettingsController.updateAiSettings);
 
 // Legal content (public - no auth required)
 router.get('/legal/:type', settingsController.getLegalContent);
+
+// Favicon upload (admin only)
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+router.post('/favicon', auth, admin, upload.single('favicon'), settingsController.uploadFavicon);
 
 module.exports = router;
