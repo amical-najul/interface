@@ -10,7 +10,7 @@ version: '3.8'
 services:
   # Backend API
   api:
-    env_file: .env
+    # env_file: .env # Eliminado para producción, las variables se cargan en Portainer UI
     build:
       context: ${API_BUILD_CONTEXT}
       dockerfile: Dockerfile
@@ -62,7 +62,7 @@ services:
   # Frontend Web
   web:
     image: ${IMAGE_WEB}
-    env_file: .env
+    # env_file: .env # Eliminado para producción, las variables se cargan en Portainer UI
     build:
       context: ${WEB_BUILD_CONTEXT}
       dockerfile: Dockerfile
