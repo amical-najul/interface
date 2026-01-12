@@ -111,14 +111,14 @@ const GeneralTab = () => {
             // Wait, looking at original code... it updated app_favicon_url state with data.avatar_url.
             // This means it was uploading to user profile but using that URL as global favicon? 
             // Probably fine for now as a hack.
-            const res = await fetch(`${API_URL}/users/avatar`, {
+            const res = await fetch(`${API_URL}/settings/favicon`, {
                 method: 'POST',
                 headers: { 'x-auth-token': token },
                 body: formData
             });
             const data = await res.json();
             if (res.ok) {
-                setSettings(prev => ({ ...prev, app_favicon_url: data.avatar_url }));
+                setSettings(prev => ({ ...prev, app_favicon_url: data.favicon_url }));
                 setSuccess('Imagen subida. Guarda para aplicar como Favicon.');
             } else {
                 setError(data.message || 'Error al subir imagen');

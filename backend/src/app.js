@@ -8,6 +8,7 @@ const { errorHandler } = require('./middleware/errorMiddleware');
 const app = express();
 
 // Security Headers (Helmet)
+app.set('trust proxy', 1); // Trust first proxy (Traefik) for correct IP identification
 app.use(helmet());
 
 // Global Rate Limiting
