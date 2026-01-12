@@ -2,21 +2,18 @@ version: '3.8'
 
 # ============================================
 # DOCKER COMPOSE - PRODUCCIÓN (PORTAINER)
-# ============================================
-# Uso: Crear Stack en Portainer con este archivo
-# Variables: Introducir manualmente en la sección "Environment variables" de Portainer.
+# CORREGIDO SEGÚN SCRIPT DE INSTALACIÓN (PDF)
 # ============================================
 
 services:
   # Backend API
   api:
     build:
-      context: ./backend
+      context: ${API_BUILD_CONTEXT}
       dockerfile: Dockerfile
     container_name: ${VITE_APP_NAME:-interface}_api
     restart: always
     environment:
-      # Server
       - PORT=3000
       - NODE_ENV=production
       # Database
@@ -46,9 +43,11 @@ services:
       - FRONTEND_URL=https://${DOMAIN_NAME}
     labels:
       - "traefik.enable=true"
+      # Router HTTPS
       - "traefik.http.routers.api.rule=Host(`api.${DOMAIN_NAME}`)"
       - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=myresolver"
+      # AQUÍ ESTABA EL ERROR: Se cambia 'myresolver' por 'letsencrypt'
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
       - "traefik.http.services.api.loadbalancer.server.port=3000"
       - "traefik.docker.network=traefik_proxy"
     networks:
@@ -58,18 +57,20 @@ services:
   # Frontend Web
   web:
     build:
-      context: ./frontend
+      context: ${WEB_BUILD_CONTEXT}
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://api.${DOMAIN_NAME}
+        - VITE_API_URL=https://api.${DOMAIN_NAME}/api
         - VITE_APP_NAME=${VITE_APP_NAME:-interface}
     container_name: ${VITE_APP_NAME:-interface}_web
     restart: always
     labels:
       - "traefik.enable=true"
+      # Router HTTPS
       - "traefik.http.routers.web.rule=Host(`${DOMAIN_NAME}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=myresolver"
+      # AQUÍ ESTABA EL ERROR: Se cambia 'myresolver' por 'letsencrypt'
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
       - "traefik.http.services.web.loadbalancer.server.port=8080"
       - "traefik.docker.network=traefik_proxy"
     networks:
@@ -81,6 +82,7 @@ services:
 networks:
   traefik_proxy:
     external:
+      # El PDF confirma que la red se llama "traefik_proxy"
       name: ${TRAEFIK_PROXY_NETWORK:-traefik_proxy}
   internal_services:
     external:
